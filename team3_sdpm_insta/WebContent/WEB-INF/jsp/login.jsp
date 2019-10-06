@@ -1,7 +1,6 @@
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <head>
 	<title>Login</title>
-	<link href="<c:url value="/WebContent/WEB-INF/jsp/login" />" rel="stylesheet">	
+	<link href="${pageContext.request.contextPath}/resources/style/login.css" rel="stylesheet" >
 </head>
 <body>
 
