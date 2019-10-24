@@ -1,44 +1,52 @@
 package com.InstagramClone.ImageService;
 
+import org.bson.types.ObjectId;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.mongodb.client.FindIterable;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.ArrayList;
+import static com.mongodb.client.model.Filters.eq;
+
 
 public class ImageStorageService {
+	
+    private DatabaseController db = DatabaseController.getInstance();
 
-    private final Path rootLocation = Paths.get("Images");
-    
-    private HashMap<UUID, Image> imageDatabase = new HashMap<UUID, Image>();
-
-    String store(MultipartFile file) throws IOException {
+	public Image post(MultipartFile file, String account, String description) throws IOException {
         String filename = StringUtils.cleanPath(file.getOriginalFilename());
         try {
             if (file.isEmpty()) {
                 throw new IOException("Failed to store empty file " + filename);
             }
             try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, this.rootLocation.resolve(filename),
-                    StandardCopyOption.REPLACE_EXISTING);
-                UUID uniqueID = UUID.randomUUID();
-                Image i = new Image(uniqueID, filename);
-                imageDatabase.put(uniqueID, i);
-                return uniqueID.toString();
+            	byte[] imageFile = inputStream.readAllBytes();
+            	Image i = new Image(imageFile);
+            	db.insertImage(i);
+            	ArrayList<ObjectId> images = new ArrayList<>();
+            	images.add(i.getId());
+            	Post post = new Post(images, account, description);
+            	db.makePost(post);
+                return i;
             }
         }
+        
         catch (IOException e) {
             throw new IOException("Failed to store file " + filename, e);
         }
     }
+    
+    public String getPostsFromAccount(String account) {
+    	FindIterable<Post> r = db.postFind(eq("account", account));
+    	return r.toString();
+    }
 
-    String load(String id) {
-    	return imageDatabase.get(UUID.fromString(id)).getContent();
+    public String load(String id) {
+    	DatabaseController db = DatabaseController.getInstance();
+    	db.getImage(id);
+    	return "";
     }
 }

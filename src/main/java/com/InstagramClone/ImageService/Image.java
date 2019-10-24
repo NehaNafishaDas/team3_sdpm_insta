@@ -1,22 +1,34 @@
 package com.InstagramClone.ImageService;
 
-import java.util.UUID;
+import org.bson.types.ObjectId;
 
 public class Image {
 
-    private final UUID id;
-    private final String name;
-
-    public Image(UUID uniqueID, String name) {
-        this.id = uniqueID;
-        this.name = name;
+    private ObjectId id;
+	private byte[] imageFile;
+    
+	public Image(byte[] imageFile) {
+    	this.id = new ObjectId();
+        this.imageFile = imageFile;
     }
 
-    public UUID getId() {
-        return id;
+    public Image() {
+    	
     }
+    
+    public ObjectId getId() {
+		return id;
+	}
 
-    public String getContent() {
-        return name;
-    }
+	public void setId(ObjectId id) {
+		this.id = id;
+	}
+    
+    public byte[] getImageFile() {
+		return imageFile;
+	}
+
+	public void setImageFile(byte[] imageFile) {
+		this.imageFile = imageFile;
+	}
 }

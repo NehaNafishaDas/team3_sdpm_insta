@@ -1,12 +1,8 @@
 package com.InstagramClone.ImageService;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
+ 
 import java.io.IOException;
-import java.io.InputStream;
 
-import org.apache.commons.io.IOUtils;
-import org.springframework.stereotype.Controller;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,42 +12,38 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller
+@RestController
 public class ImageController {
     private final ImageStorageService imageStorageService = new ImageStorageService();
-    private final String dir = System.getProperty("user.dir");
     
     @GetMapping("/image/{id:.+}")
     public @ResponseBody ResponseEntity<byte[]> getImage(@PathVariable String id) throws IOException {
-        String imageName = imageStorageService.load(id);
-    	InputStream in = new BufferedInputStream(new FileInputStream(dir + "/Images/" + imageName));
+        String imageName = id;
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.IMAGE_PNG);
-        return new ResponseEntity<byte[]>(IOUtils.toByteArray(in), headers, HttpStatus.CREATED);
+        DatabaseController db = DatabaseController.getInstance();
+        Image i = db.getImage(imageName);
+        
+        return new ResponseEntity<byte[]>(i.getImageFile(), headers, HttpStatus.CREATED);
     }
     
-    @PostMapping("/")
-    public String imageUpload(@RequestParam("file") MultipartFile file,
-            RedirectAttributes redirectAttributes) {
-
-    	String imageID = "";
+    @PostMapping("/imageUpload")
+    public String postImage(@RequestParam("file") MultipartFile file, @RequestParam(required = false) String account, @RequestParam(required = false) String description) {
         try {
-			imageID = imageStorageService.store(file);
+        	Image imageID = imageStorageService.post(file, account, description);
+	        return imageID.getId().toString();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        redirectAttributes.addFlashAttribute("message",
-                "Image uploaded: " + file.getOriginalFilename() + " ID: " + imageID);
-
-        return "redirect:/";
+        return "error";
     }
     
-    @GetMapping("/")
-    public String greeting() {
-        return "UploadForm";
+    @GetMapping("/account/{account:.+}")
+    public @ResponseBody String getAccountImages(@PathVariable String account) throws IOException {
+        return imageStorageService.getPostsFromAccount(account);
     }
 
 }
