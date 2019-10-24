@@ -1,16 +1,12 @@
-
 var app = require('http').createServer()
+var io = module.exports.io = require('socket.io')(app)
 
-
-const io = module.exports.io = require('socket.io')(app)
-
-const PORT = 7000
+const PORT = process.env.PORT || 7000
 
 const SocketManager = require('./SocketManager')
 
-io.on('connection',SocketManager)
+io.on('connection', SocketManager)
 
-
-app.listen(PORT,()=>{
-    console.log('youre are now connected')
+app.listen(PORT, ()=>{
+	console.log("Connected to port:" + PORT);
 })
