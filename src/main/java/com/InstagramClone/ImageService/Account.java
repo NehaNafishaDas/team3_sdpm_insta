@@ -7,13 +7,15 @@ public class Account {
     private ObjectId id;
     private String username;
     private String password;
-    private RealName name;
+	private String firstName;
+	private String lastName;
     
-    public Account(String username, String password, RealName name) {
+    public Account(String username, String password) {
     	this.id = new ObjectId();
     	this.username = username;
     	this.password = password;
-    	this.name = name;
+    	this.firstName = "";
+    	this.lastName = "";
     }
 
 	public ObjectId getId() {
@@ -40,25 +42,6 @@ public class Account {
 		this.password = password;
 	}
 
-	public RealName getName() {
-		return name;
-	}
-
-	public void setName(RealName name) {
-		this.name = name;
-	}
-    
-}
-
-class RealName {
-	private String firstName;
-	private String lastName;
-	
-	public RealName(String firstName, String lastName) {
-		this.firstName = firstName;
-		this.lastName = lastName;
-	}
-	
 	public String getFirstName() {
 		return firstName;
 	}

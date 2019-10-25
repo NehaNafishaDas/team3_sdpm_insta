@@ -70,13 +70,14 @@ public class DatabaseController {
 	}
 	
 	// Create an account from a given account object
-	public void createAccount(Account account) {
-		
+	public ObjectId createAccount(Account account) {
+		accountDb.insertOne(account);
+		return account.getId();
 	}
 	
 	// Return account object given an objectid as a string
 	public Account getAccount(String id) {
-		return new Account("","", new RealName("", ""));
+		return new Account("","");
 	}
 	
 	// Makes a post on the database
