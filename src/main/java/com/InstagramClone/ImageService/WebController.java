@@ -10,4 +10,9 @@ public class WebController {
     public String uploadForm() {
         return "UploadForm";
     }
+    
+    @GetMapping("/")
+    public String homepage() {
+        return "UploadForm";
+    }
 }

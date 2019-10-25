@@ -30,7 +30,7 @@ public class ImageController {
         return new ResponseEntity<byte[]>(i.getImageFile(), headers, HttpStatus.CREATED);
     }
     
-    @PostMapping("/imageUpload")
+    @PostMapping("/imageupload")
     public String postImage(@RequestParam("file") MultipartFile file, @RequestParam(required = false) String account, @RequestParam(required = false) String description) {
         try {
         	Image imageID = imageStorageService.post(file, account, description);
