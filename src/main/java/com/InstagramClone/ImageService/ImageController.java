@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.InstagramClone.models.Image;
+
 @RestController
 public class ImageController {
     private final ImageStorageService imageStorageService = new ImageStorageService();

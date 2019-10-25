@@ -1,4 +1,4 @@
-package com.InstagramClone.ImageService;
+package com.InstagramClone.models;
 
 import java.util.ArrayList;
 

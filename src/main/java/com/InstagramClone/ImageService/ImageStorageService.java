@@ -4,6 +4,8 @@ import org.bson.types.ObjectId;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.InstagramClone.models.Image;
+import com.InstagramClone.models.Post;
 import com.mongodb.client.FindIterable;
 
 import java.io.IOException;

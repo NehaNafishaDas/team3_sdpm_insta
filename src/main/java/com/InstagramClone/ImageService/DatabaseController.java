@@ -14,6 +14,9 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+import com.InstagramClone.models.Account;
+import com.InstagramClone.models.Image;
+import com.InstagramClone.models.Post;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.FindIterable;
