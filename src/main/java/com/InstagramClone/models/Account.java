@@ -21,6 +21,10 @@ public class Account {
     	this.lastName = "";
     	this.posts = new ArrayList<Post>();
     }
+    
+    public Account() {
+    	
+    }
 
 	public String get_id() {
 		return _id.toHexString();

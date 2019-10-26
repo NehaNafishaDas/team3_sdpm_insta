@@ -1,6 +1,7 @@
 package com.InstagramClone.ImageService;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.and;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
@@ -77,9 +78,18 @@ public class DatabaseController {
 		return account.get_id();
 	}
 	
+	public String checkAccount(String username, String password) {
+		Account login = accountDb.find(and(eq("username", username), eq("password", password))).first();
+		if(login != null) {
+			return login.get_id();
+		} else {
+			return null;
+		}
+	}
+	
 	// Return account object given an objectid as a string
-	public Account getAccount(String id) {
-		return new Account("","");
+	public Account getAccount(ObjectId id) {
+		return accountDb.find(eq("_id", id)).first();
 	}
 	
 	// Makes a post on the database

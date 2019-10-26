@@ -4,6 +4,7 @@ import org.bson.types.ObjectId;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.InstagramClone.models.Account;
 import com.InstagramClone.models.Image;
 import com.InstagramClone.models.Post;
 import com.mongodb.client.FindIterable;
@@ -12,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import static com.mongodb.client.model.Filters.eq;
-
 
 public class ImageStorageService {
 	
@@ -44,6 +44,10 @@ public class ImageStorageService {
     public String getPostsFromAccount(String account) {
     	FindIterable<Post> r = db.postFind(eq("account", account));
     	return r.toString();
+    }
+    
+    public Account getAccount(ObjectId requestId) {
+    	return db.getAccount(requestId);
     }
 
     public String load(String id) {
