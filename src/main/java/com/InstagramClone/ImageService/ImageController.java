@@ -1,6 +1,5 @@
 package com.InstagramClone.ImageService;
 
- 
 import java.io.IOException;
 
 import org.springframework.http.HttpHeaders;
@@ -36,16 +35,12 @@ public class ImageController {
     public String postImage(@RequestParam("file") MultipartFile file, @RequestParam(required = false) String account, @RequestParam(required = false) String description) {
         try {
         	Image imageID = imageStorageService.post(file, account, description);
-	        return imageID.getId().toString();
+	        return imageID.get_id();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
         return "error";
     }
     
-    @GetMapping("/account/{account:.+}")
-    public @ResponseBody String getAccountImages(@PathVariable String account) throws IOException {
-        return imageStorageService.getPostsFromAccount(account);
-    }
 
 }

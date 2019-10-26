@@ -28,8 +28,8 @@ public class ImageStorageService {
             	byte[] imageFile = inputStream.readAllBytes();
             	Image i = new Image(imageFile);
             	db.insertImage(i);
-            	ArrayList<ObjectId> images = new ArrayList<>();
-            	images.add(i.getId());
+            	ArrayList<String> images = new ArrayList<>();
+            	images.add(i.get_id());
             	Post post = new Post(images, account, description);
             	db.makePost(post);
                 return i;

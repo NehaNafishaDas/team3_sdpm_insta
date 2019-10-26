@@ -4,11 +4,11 @@ import org.bson.types.ObjectId;
 
 public class Image {
 
-    private ObjectId id;
-	private byte[] imageFile;
+	public ObjectId _id;
+	public byte[] imageFile;
     
 	public Image(byte[] imageFile) {
-    	this.id = new ObjectId();
+    	this._id = new ObjectId();
         this.imageFile = imageFile;
     }
 
@@ -16,12 +16,12 @@ public class Image {
     	
     }
     
-    public ObjectId getId() {
-		return id;
+    public String get_id() {
+		return _id.toHexString();
 	}
 
-	public void setId(ObjectId id) {
-		this.id = id;
+	public void set_id(ObjectId id) {
+		this._id = id;
 	}
     
     public byte[] getImageFile() {

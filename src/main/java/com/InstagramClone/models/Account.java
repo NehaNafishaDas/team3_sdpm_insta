@@ -1,29 +1,33 @@
 package com.InstagramClone.models;
 
+import java.util.ArrayList;
+
 import org.bson.types.ObjectId;
 
 public class Account {
 	
-    private ObjectId id;
-    private String username;
-    private String password;
-	private String firstName;
-	private String lastName;
+    public ObjectId _id;
+    public String username;
+    public String password;
+    public String firstName;
+    public String lastName;
+    public ArrayList<Post> posts;
     
     public Account(String username, String password) {
-    	this.id = new ObjectId();
+    	this._id = new ObjectId();
     	this.username = username;
     	this.password = password;
     	this.firstName = "";
     	this.lastName = "";
+    	this.posts = new ArrayList<Post>();
     }
 
-	public ObjectId getId() {
-		return id;
+	public String get_id() {
+		return _id.toHexString();
 	}
 
-	public void setId(ObjectId id) {
-		this.id = id;
+	public void set_id(ObjectId _id) {
+		this._id = _id;
 	}
 
 	public String getUsername() {

@@ -7,16 +7,16 @@ import org.bson.types.ObjectId;
 
 public class Post {
 	
-    private ObjectId id;
-    private ArrayList<ObjectId> imageId;
-    private String account;
-	private boolean isPublic; 
-    private String description;
-    private long time;
+	public ObjectId _id;
+	public ArrayList<String> imageId;
+	public String account;
+	public boolean isPublic; 
+	public String description;
+	public long time;
     
-    public Post(ArrayList<ObjectId> imageId, String account, String description) {
-    	this.setId(new ObjectId());
-    	this.imageId = imageId;
+    public Post(ArrayList<String> images, String account, String description) {
+    	this.set_id(new ObjectId());
+    	this.imageId = images;
     	this.account = account;
     	this.isPublic = true;
     	this.description = description;
@@ -27,19 +27,19 @@ public class Post {
 
     }
 
-	public ObjectId getId() {
-		return id;
+	public String get_id() {
+		return _id.toHexString();
 	}
 
-	public void setId(ObjectId id) {
-		this.id = id;
+	public void set_id(ObjectId id) {
+		this._id = id;
 	}
 
-	public ArrayList<ObjectId> getImageId() {
+	public ArrayList<String> getImageId() {
 		return imageId;
 	}
 
-	public void setImageId(ArrayList<ObjectId> imagesId) {
+	public void setImageId(ArrayList<String> imagesId) {
 		this.imageId = imagesId;
 	}
 	

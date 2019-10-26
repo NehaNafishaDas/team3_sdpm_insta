@@ -4,7 +4,6 @@ import static com.mongodb.client.model.Filters.eq;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -73,9 +72,9 @@ public class DatabaseController {
 	}
 	
 	// Create an account from a given account object
-	public ObjectId createAccount(Account account) {
+	public String createAccount(Account account) {
 		accountDb.insertOne(account);
-		return account.getId();
+		return account.get_id();
 	}
 	
 	// Return account object given an objectid as a string
@@ -100,6 +99,4 @@ public class DatabaseController {
   
         return single_instance; 
     }
-    
-    
 }
