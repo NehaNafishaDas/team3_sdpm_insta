@@ -1,4 +1,4 @@
-package com.InstagramClone.models;
+package com.InstagramClone.model;
 
 import java.util.ArrayList;
 
@@ -12,6 +12,7 @@ public class Post {
 	public String account;
 	public boolean isPublic; 
 	public String description;
+	public int likes;
 	public long time;
     
     public Post(ArrayList<String> images, String account, String description) {

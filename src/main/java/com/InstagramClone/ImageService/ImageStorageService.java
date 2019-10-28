@@ -4,14 +4,15 @@ import org.bson.types.ObjectId;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.InstagramClone.models.Account;
-import com.InstagramClone.models.Image;
-import com.InstagramClone.models.Post;
+import com.InstagramClone.model.Account;
+import com.InstagramClone.model.Image;
+import com.InstagramClone.model.Post;
 import com.mongodb.client.FindIterable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+
 import static com.mongodb.client.model.Filters.eq;
 
 public class ImageStorageService {

@@ -1,4 +1,4 @@
-package com.InstagramClone.models;
+package com.InstagramClone.model;
 
 import org.bson.types.ObjectId;
 

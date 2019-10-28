@@ -1,4 +1,4 @@
-package com.InstagramClone.models;
+package com.InstagramClone.model;
 
 import java.util.ArrayList;
 
@@ -12,6 +12,7 @@ public class Account {
     public String firstName;
     public String lastName;
     public ArrayList<Post> posts;
+	public ArrayList<ObjectId> followedUsers;
     
     public Account(String username, String password) {
     	this._id = new ObjectId();
@@ -22,9 +23,7 @@ public class Account {
     	this.posts = new ArrayList<Post>();
     }
     
-    public Account() {
-    	
-    }
+    public Account() {}
 
 	public String get_id() {
 		return _id.toHexString();
@@ -65,4 +64,13 @@ public class Account {
 	public void setLastName(String lastName) {
 		this.lastName = lastName;
 	}
+
+	public ArrayList<ObjectId> getFollowedUsers() {
+    	return followedUsers;
+    }
+
+	public void setFollowedUsers(ArrayList<ObjectId> followedUsers) {
+    	this.followedUsers = followedUsers;
+    }
+
 }
