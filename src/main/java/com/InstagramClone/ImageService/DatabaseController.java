@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import com.mongodb.client.model.Updates;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
@@ -91,12 +93,23 @@ public class DatabaseController {
 	public Account getAccount(ObjectId id) {
 		return accountDb.find(eq("_id", id)).first();
 	}
-	
-	// Makes a post on the database
-	public void makePost(Post post) {
-		postDb.insertOne(post);
+
+	public Post getPost(ObjectId id){
+		return postDb.find(eq("_id", id)).first();
 	}
-	
+	// Makes a post on the database
+	public void makePost(Account account, Post post) {
+		postDb.insertOne(post);
+		accountDb.updateOne(eq("_id", new ObjectId(account.get_id())),
+				Updates.addToSet("posts", new ObjectId(post.get_id())));
+	}
+
+	// TODO disallow liking a post more than once
+	public void likePost(Account account, Post post) {
+		accountDb.updateOne(eq("_id", account._id), Updates.addToSet("likedPosts", post._id));
+		postDb.updateOne(eq("_id", post._id), Updates.inc("likes", 1));
+	}
+
 	// Returns a list of posts based on a bson query
 	public FindIterable<Post> postFind(Bson query) {
 		return postFind(query);

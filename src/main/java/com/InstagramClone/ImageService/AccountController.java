@@ -1,9 +1,12 @@
 package com.InstagramClone.ImageService;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.servlet.http.HttpSession;
 
+import com.InstagramClone.model.Post;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,14 +24,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class AccountController {
-    private final ImageStorageService imageStorageService = new ImageStorageService();
 	private ObjectMapper om = new ObjectMapper();
-	
-	// Creates account given a username and password
+    private final DatabaseController db = DatabaseController.getInstance();
+
+    // Creates account given a username and password
     @PostMapping(value = "/signup", produces = "application/json")
     public Account signUp(@RequestParam String username, @RequestParam String password) {
-    	DatabaseController db = DatabaseController.getInstance();
-    	Account account = new Account(username, password);
+        Account account = new Account(username, password);
     	db.createAccount(account);
     	return account;
     }
@@ -52,8 +54,10 @@ public class AccountController {
         		response.put("status", "failed");
         		return om.writeValueAsString(response);
         	}
+        } else {
+            response.put("status", "failed");
+            return om.writeValueAsString(response);
         }
-		return loggedInAs;
     }
     
     @PostMapping(value = "/signout", produces = "application/json")
@@ -79,16 +83,19 @@ public class AccountController {
     	}
     }
 
+    // TODO
     @PostMapping(value = "/blockuser/{account:.+}", produces = "application/json")
     public @ResponseBody String blockUser(@PathVariable String account) {
         return null;
     }
 
+    // TODO
     @PostMapping(value = "/unblockuser/{account:.+}", produces = "application/json")
     public @ResponseBody String unblockUser(@PathVariable String account) {
         return null;
     }
 
+    // TODO
     @PostMapping(value = "/changepassword", produces = "application/json")
     public String changePassword(@RequestParam String account, @RequestParam String oldPassword, @RequestParam String oldPasswordConfirmation, @RequestParam String newPassword) {
         return null;
@@ -96,24 +103,71 @@ public class AccountController {
 
     @GetMapping(value = "/account/{account:.+}", produces = "application/json")
     public @ResponseBody String getAccount(@PathVariable String account) throws IOException {
-        ObjectNode accountInfo = om.createObjectNode();
         ObjectId accId;
         try {
             accId = new ObjectId(account);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid user account");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid user account");
         }
-        Account requestedAccount = imageStorageService.getAccount(accId);
-        accountInfo.put("_id", requestedAccount.get_id());
-        accountInfo.put("username", requestedAccount.getUsername());
-        accountInfo.put("firstName", requestedAccount.getFirstName());
-        accountInfo.put("lastName", requestedAccount.getLastName());
+        Account requestedAccount = db.getAccount(accId);
+        if(requestedAccount == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid user account");
+        }
+        ObjectNode response = om.createObjectNode();
+        response.put("_id", requestedAccount.get_id());
+        response.put("username", requestedAccount.getUsername());
+        response.put("firstName", requestedAccount.getFirstName());
+        response.put("lastName", requestedAccount.getLastName());
 
-        return om.writeValueAsString(accountInfo);
+        return om.writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/makepost", produces = "application/json")
+    public @ResponseBody String makePost(@RequestParam String[] images,
+                                         @RequestParam String description,
+                                         HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("loggedInAs");
+        if(loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        ArrayList<ObjectId> imageList = new ArrayList<>();
+        Account a = db.getAccount(new ObjectId(loggedInAs));
+        try {
+            for (int i = 0; i < images.length; i++) {
+                imageList.add(new ObjectId(images[i]));
+            }
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid image id");
+        }
+        Post p = new Post(imageList, a.get_id(), description);
+        db.makePost(a, p);
+        ObjectNode response = om.createObjectNode();
+        response.put("_id", p.get_id());
+        return om.writeValueAsString(response);
     }
     
     @GetMapping(value = "/accountposts/{account:.+}", produces = "application/json")
-    public @ResponseBody String getAccountImages(@PathVariable String account) {
-        return imageStorageService.getPostsFromAccount(account);
+    public @ResponseBody String getAccountImages(@PathVariable String account) throws JsonProcessingException {
+        Account a;
+        try {
+            a = db.getAccount(new ObjectId(account));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid user account");
+        }
+
+        ObjectNode response = om.createObjectNode();
+        if(a == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no posts on account");
+        }
+
+        ArrayList<ObjectId> p = a.getPosts();
+
+        Iterator<ObjectId> posts = p.iterator();
+        int postCount = 0;
+        while(posts.hasNext()) {
+            response.put(String.valueOf(postCount), posts.next().toHexString());
+            postCount++;
+        }
+        return om.writeValueAsString(response);
     }
 }

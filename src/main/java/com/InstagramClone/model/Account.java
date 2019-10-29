@@ -11,8 +11,10 @@ public class Account {
     public String password;
     public String firstName;
     public String lastName;
-    public ArrayList<Post> posts;
+    public int postCount;
+    public ArrayList<ObjectId> posts;
 	public ArrayList<ObjectId> followedUsers;
+	public ArrayList<ObjectId> likedPosts;
     
     public Account(String username, String password) {
     	this._id = new ObjectId();
@@ -20,7 +22,10 @@ public class Account {
     	this.password = password;
     	this.firstName = "";
     	this.lastName = "";
-    	this.posts = new ArrayList<Post>();
+    	this.posts = new ArrayList<>();
+    	this.followedUsers = new ArrayList<>();
+    	this.likedPosts = new ArrayList<>();
+    	this.postCount = 0;
     }
     
     public Account() {}
@@ -73,4 +78,27 @@ public class Account {
     	this.followedUsers = followedUsers;
     }
 
+	public ArrayList<ObjectId> getLikedPosts() {
+		return likedPosts;
+	}
+
+	public void setLikedPosts(ArrayList<ObjectId> likedPosts) {
+		this.likedPosts = likedPosts;
+	}
+
+	public ArrayList<ObjectId> getPosts() {
+		return posts;
+	}
+
+	public void setPosts(ArrayList<ObjectId> posts) {
+		this.posts = posts;
+	}
+
+	public int getPostCount() {
+		return postCount;
+	}
+
+	public void setPostCount(int postCount) {
+		this.postCount = postCount;
+	}
 }

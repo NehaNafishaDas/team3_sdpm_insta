@@ -1,6 +1,7 @@
 package com.InstagramClone.model;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.tomcat.jni.Time;
 import org.bson.types.ObjectId;
@@ -8,20 +9,21 @@ import org.bson.types.ObjectId;
 public class Post {
 	
 	public ObjectId _id;
-	public ArrayList<String> imageId;
+	public ArrayList<ObjectId> imageId;
 	public String account;
 	public boolean isPublic; 
 	public String description;
 	public int likes;
-	public long time;
+	public ArrayList<String> tags;
+	public Date date;
     
-    public Post(ArrayList<String> images, String account, String description) {
+    public Post(ArrayList<ObjectId> images, String account, String description) {
     	this.set_id(new ObjectId());
     	this.imageId = images;
     	this.account = account;
     	this.isPublic = true;
     	this.description = description;
-    	this.setTime(Time.now());
+    	this.setDate(new Date());
     }
     
     public Post() {
@@ -36,11 +38,11 @@ public class Post {
 		this._id = id;
 	}
 
-	public ArrayList<String> getImageId() {
+	public ArrayList<ObjectId> getImageId() {
 		return imageId;
 	}
 
-	public void setImageId(ArrayList<String> imagesId) {
+	public void setImageId(ArrayList<ObjectId> imagesId) {
 		this.imageId = imagesId;
 	}
 	
@@ -68,11 +70,27 @@ public class Post {
 		this.description = description;
 	}
 
-	public long getTime() {
-		return time;
+	public Date getDate() {
+		return date;
 	}
 
-	public void setTime(long time) {
-		this.time = time;
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	public int getLikes() {
+		return likes;
+	}
+
+	public void setLikes(int likes) {
+		this.likes = likes;
+	}
+
+	public ArrayList<String> getTags() {
+		return tags;
+	}
+
+	public void setTags(ArrayList<String> tags) {
+		this.tags = tags;
 	}
 }
