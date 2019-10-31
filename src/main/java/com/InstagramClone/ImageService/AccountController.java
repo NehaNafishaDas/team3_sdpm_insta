@@ -7,6 +7,7 @@ import java.util.Iterator;
 import javax.servlet.http.HttpSession;
 
 import com.InstagramClone.model.Post;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,40 +30,54 @@ public class AccountController {
 
     // Creates account given a username and password
     @PostMapping(value = "/signup", produces = "application/json")
-    public Account signUp(@RequestParam String username, @RequestParam String password) {
+    public String signUp(@RequestParam String username, @RequestParam String password) throws JsonProcessingException {
         Account account = new Account(username, password);
-    	db.createAccount(account);
-    	return account;
+        if (db.getAccount(username) != null) {
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "failed");
+            response.put("error", "Account already exists with username "+username);
+            return om.writeValueAsString(response);
+        } else {
+            ObjectNode response = om.createObjectNode();
+            String id = db.createAccount(account);
+            response.put("status", "success");
+            response.put("username", username);
+            response.put("_id", id);
+            return om.writeValueAsString(response);
+        }
     }
 
     @PostMapping(value = "/signin", produces = "application/json")
     public String signIn(@RequestParam String username, @RequestParam String password, HttpSession session) throws JsonProcessingException {
     	DatabaseController db = DatabaseController.getInstance();
-        String loggedInAs = (String) session.getAttribute("loggedInAs");
+        String loggedInAs = (String) session.getAttribute("Username");
         
         ObjectNode response = om.createObjectNode();
         
         if(loggedInAs == null) {
-        	loggedInAs = db.checkAccount(username, password);
-        	if(loggedInAs != null) {
-        		session.setAttribute("loggedInAs", loggedInAs);
+        	Account loggedInAccount = db.checkAccount(username, password);
+        	if(loggedInAccount != null) {
+        		session.setAttribute("username", loggedInAccount.getUsername());
+                session.setAttribute("userid", loggedInAccount.get_id());
         		response.put("status", "success");
-        		response.put("loggedInAs", loggedInAs);
+        		response.put("username", loggedInAccount.getUsername());
         		return om.writeValueAsString(response);
         	} else {
-        		session.setAttribute("loggedInAs", null);
+        		session.setAttribute("Username", null);
         		response.put("status", "failed");
-        		return om.writeValueAsString(response);
+                response.put("error", "Invalid username or password");
+                return om.writeValueAsString(response);
         	}
         } else {
             response.put("status", "failed");
+            response.put("error", "Already logged in");
             return om.writeValueAsString(response);
         }
     }
     
     @PostMapping(value = "/signout", produces = "application/json")
     public String signOut(HttpSession session) throws JsonProcessingException {
-        session.setAttribute("loggedInAs", null);
+        session.setAttribute("username", null);
         ObjectNode response = om.createObjectNode();
         response.put("status", "loggedout");
 		return om.writeValueAsString(response);
@@ -71,11 +86,11 @@ public class AccountController {
     // Check current login status
     @GetMapping(value = "/loginstatus", produces = "application/json")
     public String checkLogin(HttpSession session) throws IOException {
-    	String loggedInAs = (String) session.getAttribute("loggedInAs");
+    	String loggedInAs = (String) session.getAttribute("username");
     	ObjectNode response = om.createObjectNode();
     	if(loggedInAs != null) {
     		response.put("status", "loggedin");
-    		response.put("loggedInAs", loggedInAs);
+    		response.put("username", loggedInAs);
     		return om.writeValueAsString(response);
     	} else {
     		response.put("status", "notloggedin");
@@ -97,8 +112,62 @@ public class AccountController {
 
     // TODO
     @PostMapping(value = "/changepassword", produces = "application/json")
-    public String changePassword(@RequestParam String account, @RequestParam String oldPassword, @RequestParam String oldPasswordConfirmation, @RequestParam String newPassword) {
+    public String changePassword(@RequestParam String account,
+                                 @RequestParam String oldPassword,
+                                 @RequestParam String newPassword) {
         return null;
+    }
+
+    @PostMapping(value = "/follow", produces = "application/json")
+    public String followuser(@RequestParam String targetaccount,
+                             HttpSession session) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        ObjectNode response = om.createObjectNode();
+        if(username == null) {
+            response.put("status", "failed");
+            response.put("error", "Not logged in");
+            return om.writeValueAsString(response);
+        } else {
+            Account followTarget = db.getAccount(targetaccount);
+            Account user = db.getAccount(new ObjectId(userid));
+            if(followTarget == null) {
+                response.put("status", "failed");
+                response.put("error", "User not found");
+                return om.writeValueAsString(response);
+            } else {
+                db.followUser(followTarget._id, user._id);
+                response.put("status", "success");
+                response.put("error", "Now following user " + targetaccount);
+                return om.writeValueAsString(response);
+            }
+        }
+    }
+
+    @PostMapping(value = "/unfollow", produces = "application/json")
+    public String unfollowuser(@RequestParam String targetaccount,
+                             HttpSession session) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        ObjectNode response = om.createObjectNode();
+        if(username == null) {
+            response.put("status", "failed");
+            response.put("error", "Not logged in");
+            return om.writeValueAsString(response);
+        } else {
+            Account followTarget = db.getAccount(targetaccount);
+            Account user = db.getAccount(new ObjectId(userid));
+            if(followTarget == null) {
+                response.put("status", "failed");
+                response.put("error", "User not found");
+                return om.writeValueAsString(response);
+            } else {
+                db.unfollowUser(followTarget._id, user._id);
+                response.put("status", "success");
+                response.put("error", "Unfollowed user " + targetaccount);
+                return om.writeValueAsString(response);
+            }
+        }
     }
 
     @GetMapping(value = "/account/{account:.+}", produces = "application/json")
@@ -126,7 +195,7 @@ public class AccountController {
     public @ResponseBody String makePost(@RequestParam String[] images,
                                          @RequestParam String description,
                                          HttpSession session) throws JsonProcessingException {
-        String loggedInAs = (String) session.getAttribute("loggedInAs");
+        String loggedInAs = (String) session.getAttribute("username");
         if(loggedInAs == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
         }

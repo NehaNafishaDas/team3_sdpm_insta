@@ -80,18 +80,32 @@ public class DatabaseController {
 		return account.get_id();
 	}
 	
-	public String checkAccount(String username, String password) {
+	public Account checkAccount(String username, String password) {
 		Account login = accountDb.find(and(eq("username", username), eq("password", password))).first();
 		if(login != null) {
-			return login.get_id();
+			return login;
 		} else {
 			return null;
 		}
 	}
-	
-	// Return account object given an objectid as a string
+
+	public String followUser(ObjectId targetAccount, ObjectId currentAccount) {
+		accountDb.updateOne(eq("_id", currentAccount), Updates.addToSet("followedUsers", targetAccount));
+		return "success";
+	}
+
+	public String unfollowUser(ObjectId targetAccount, ObjectId currentAccount) {
+		accountDb.updateOne(eq("_id", currentAccount), Updates.pull("followedUsers", targetAccount));
+		return "success";
+	}
+	// Return account object given an objectid
 	public Account getAccount(ObjectId id) {
 		return accountDb.find(eq("_id", id)).first();
+	}
+
+	// Return account object given an username as a string
+	public Account getAccount(String username) {
+		return accountDb.find(eq("username", username)).first();
 	}
 
 	public Post getPost(ObjectId id){
