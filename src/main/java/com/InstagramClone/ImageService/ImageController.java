@@ -1,11 +1,14 @@
 package com.InstagramClone.ImageService;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.InstagramClone.model.Account;
 import com.InstagramClone.model.Post;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,21 +23,35 @@ import org.springframework.web.multipart.MultipartFile;
 import com.InstagramClone.model.Image;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
 
 @RestController
 public class ImageController {
     private final DatabaseController db = DatabaseController.getInstance();
     private ObjectMapper om = new ObjectMapper();
+    private Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+            "cloud_name", "dongodxek",
+            "api_key", "473417739651645",
+            "api_secret", "C6P529y3ejZcBSeVyqh-4Opeo1w"));
 
-    @GetMapping("/image/{id:.+}")
-    public @ResponseBody ResponseEntity<byte[]> getImage(@PathVariable String id) {
-        final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_PNG);
-        Image i = db.getImage(id);
 
-        return new ResponseEntity<>(i.getImageFile(), headers, HttpStatus.CREATED);
-    }
+//    @GetMapping("/image/{id:.+}")
+//    public @ResponseBody ResponseEntity<byte[]> getImage(@PathVariable String id) {
+//        final HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.IMAGE_PNG);
+//        ObjectId imageid;
+//        try {
+//            imageid = new ObjectId(id);
+//        } catch (IllegalArgumentException e) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid id");
+//        }
+//        Image i = db.getImage(imageid.toHexString());
+//        if(i == null) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "image not found");
+//        }
+//        return new ResponseEntity<>(i.getImageFile(), headers, HttpStatus.CREATED);
+//    }
 
     @PostMapping(value = "/imageupload", produces = "application/json")
     public @ResponseBody String uploadImage(@RequestBody MultipartFile file,
@@ -46,16 +63,10 @@ public class ImageController {
         }
         if(file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "could not accept file");
-        } try (InputStream inputStream = file.getInputStream()) {
-            byte[] imageFile = inputStream.readAllBytes();
-            Image i = new Image(imageFile);
-            db.insertImage(i);
-            ObjectNode response = om.createObjectNode();
-            response.put("_id", i.get_id());
-            return om.writeValueAsString(response);
-        } catch (IOException e) {
-            throw new IOException("Failed to store file ", e);
         }
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+
+        return uploadResult.toString();
     }
 
     @PostMapping(value = "/imagepost", produces = "application/json")
@@ -68,23 +79,17 @@ public class ImageController {
         }
         if(images.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "could not accept file");
-        } try (InputStream inputStream = images.getInputStream()) {
-            Account a = db.getAccount(username);
-            byte[] imageFile = inputStream.readAllBytes();
-            Image i = new Image(imageFile);
-
-            db.insertImage(i);
-            ArrayList<String> imageList = new ArrayList<>();
-            imageList.add(i.get_id());
-            Post p = new Post(imageList, a._id, description);
-            db.insertPost(p);
-            ObjectNode response = om.createObjectNode();
-            response.put("status", "success");
-            response.put("_id", i.get_id());
-            return om.writeValueAsString(response);
-        } catch (IOException e) {
-            throw new IOException("Failed to store file ", e);
         }
+        Account a = db.getAccount(username);
+        Map uploadResult = cloudinary.uploader().upload(images.getBytes(), ObjectUtils.emptyMap());
+        ArrayList<String> imageList = new ArrayList<>();
+        imageList.add((String)uploadResult.get("url"));
+        Post p = new Post(imageList, a._id, description);
+        db.insertPost(p);
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "success");
+        response.put("url", (String)uploadResult.get("url"));
+        return om.writeValueAsString(response);
     }
 
     @PostMapping(value = "/likepost", produces = "application/json")

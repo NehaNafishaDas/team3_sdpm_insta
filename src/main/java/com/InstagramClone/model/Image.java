@@ -2,12 +2,14 @@ package com.InstagramClone.model;
 
 import org.bson.types.ObjectId;
 
+import java.util.Map;
+
 public class Image {
 
 	public ObjectId _id;
-	public byte[] imageFile;
+	public Map imageFile;
     
-	public Image(byte[] imageFile) {
+	public Image(Map imageFile) {
     	this._id = new ObjectId();
         this.imageFile = imageFile;
     }
@@ -23,12 +25,12 @@ public class Image {
 	public void set_id(ObjectId id) {
 		this._id = id;
 	}
-    
-    public byte[] getImageFile() {
+
+	public Map getImageFile() {
 		return imageFile;
 	}
 
-	public void setImageFile(byte[] imageFile) {
+	public void setImageFile(Map imageFile) {
 		this.imageFile = imageFile;
 	}
 }
