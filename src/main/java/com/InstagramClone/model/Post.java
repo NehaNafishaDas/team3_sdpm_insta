@@ -3,29 +3,30 @@ package com.InstagramClone.model;
 import java.util.ArrayList;
 import java.util.Date;
 
-import org.apache.tomcat.jni.Time;
 import org.bson.types.ObjectId;
 
 public class Post {
-	
+
 	public ObjectId _id;
-	public ArrayList<ObjectId> imageId;
-	public String account;
-	public boolean isPublic; 
+	public ArrayList<String> imageId;
+	public ObjectId account;
 	public String description;
 	public int likes;
 	public ArrayList<String> tags;
 	public Date date;
-    
-    public Post(ArrayList<ObjectId> images, String account, String description) {
+	public Comment comments;
+
+    public Post(ArrayList<String> images, ObjectId account, String description) {
     	this.set_id(new ObjectId());
     	this.imageId = images;
     	this.account = account;
-    	this.isPublic = true;
-    	this.description = description;
+    	if(description != null) this.description = description;
+    	else this.description = "";
+    	this.likes = 0;
+    	this.tags = new ArrayList<>();
     	this.setDate(new Date());
     }
-    
+
     public Post() {
 
     }
@@ -34,32 +35,24 @@ public class Post {
 		return _id.toHexString();
 	}
 
-	public void set_id(ObjectId id) {
-		this._id = id;
+	public void set_id(ObjectId _id) {
+		this._id = _id;
 	}
 
-	public ArrayList<ObjectId> getImageId() {
+	public ArrayList<String> getImageId() {
 		return imageId;
 	}
 
-	public void setImageId(ArrayList<ObjectId> imagesId) {
-		this.imageId = imagesId;
+	public void setImageId(ArrayList<String> imageId) {
+		this.imageId = imageId;
 	}
-	
-    public String getAccount() {
+
+	public ObjectId getAccount() {
 		return account;
 	}
 
-	public void setAccount(String account) {
+	public void setAccount(ObjectId account) {
 		this.account = account;
-	}
-
-	public boolean isPublic() {
-		return isPublic;
-	}
-
-	public void setPublic(boolean isPublic) {
-		this.isPublic = isPublic;
 	}
 
 	public String getDescription() {
@@ -68,14 +61,6 @@ public class Post {
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public Date getDate() {
-		return date;
-	}
-
-	public void setDate(Date date) {
-		this.date = date;
 	}
 
 	public int getLikes() {
@@ -92,5 +77,33 @@ public class Post {
 
 	public void setTags(ArrayList<String> tags) {
 		this.tags = tags;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	public Comment getComments() {
+		return comments;
+	}
+
+	public void setComments(Comment comments) {
+		this.comments = comments;
+	}
+
+	public class Comment {
+    	public ObjectId account;
+		public Date date;
+		public String comment;
+
+		public Comment(ObjectId account, String comment) {
+			this.account = account;
+			this.comment = comment;
+			this.date = new Date();
+		}
 	}
 }

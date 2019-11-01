@@ -14,13 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.InstagramClone.model.Image;
@@ -43,10 +37,10 @@ public class ImageController {
     }
 
     @PostMapping(value = "/imageupload", produces = "application/json")
-    public @ResponseBody String uploadImage(@RequestParam("file") MultipartFile file,
-                              @RequestParam(required = false) String description,
-                                          HttpSession session) throws IOException {
-        String loggedInAs = (String) session.getAttribute("loggedInAs");
+    public @ResponseBody String uploadImage(@RequestBody MultipartFile file,
+                                            @RequestParam(required = false) String description,
+                                            HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
         if(loggedInAs == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
         }
@@ -64,10 +58,39 @@ public class ImageController {
         }
     }
 
+    @PostMapping(value = "/imagepost", produces = "application/json")
+    public @ResponseBody String imagePost(@RequestParam("images") MultipartFile images,
+                                            @RequestParam(required = false) String description,
+                                            HttpSession session) throws IOException {
+        String username = (String) session.getAttribute("username");
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        if(images.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "could not accept file");
+        } try (InputStream inputStream = images.getInputStream()) {
+            Account a = db.getAccount(username);
+            byte[] imageFile = inputStream.readAllBytes();
+            Image i = new Image(imageFile);
+
+            db.insertImage(i);
+            ArrayList<String> imageList = new ArrayList<>();
+            imageList.add(i.get_id());
+            Post p = new Post(imageList, a._id, description);
+            db.insertPost(p);
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "success");
+            response.put("_id", i.get_id());
+            return om.writeValueAsString(response);
+        } catch (IOException e) {
+            throw new IOException("Failed to store file ", e);
+        }
+    }
+
     @PostMapping(value = "/likepost", produces = "application/json")
     public @ResponseBody String likePost(@RequestParam String postid,
                                          HttpSession session) throws JsonProcessingException {
-        String loggedInAs = (String) session.getAttribute("loggedInAs");
+        String loggedInAs = (String) session.getAttribute("username");
         if(loggedInAs == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
         }

@@ -4,13 +4,14 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.and;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 import com.mongodb.client.model.Updates;
-import org.bson.Document;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
@@ -53,9 +54,9 @@ public class DatabaseController {
 		String password = prop.getProperty("password");
 		
 	    mongoClient = MongoClients.create(new ConnectionString
-	    		("mongodb+srv://"+username+":"+password+"@cluster0-lhmsj.mongodb.net/test?retryWrites=true&w=majority"));	    
-	    CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+	    		("mongodb+srv://"+username+":"+password+"@cluster0-lhmsj.mongodb.net/test?retryWrites=true&w=majority"));
+		CodecProvider pojoCodecProvider = PojoCodecProvider.builder().register("com.InstagramClone.model").build();
+		CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
 
 	    database = mongoClient.getDatabase("db");
 	    database = database.withCodecRegistry(pojoCodecRegistry);
@@ -111,10 +112,11 @@ public class DatabaseController {
 	public Post getPost(ObjectId id){
 		return postDb.find(eq("_id", id)).first();
 	}
+
 	// Makes a post on the database
-	public void makePost(Account account, Post post) {
+	public void insertPost(Post post) {
 		postDb.insertOne(post);
-		accountDb.updateOne(eq("_id", new ObjectId(account.get_id())),
+		accountDb.updateOne(eq("_id", new ObjectId(post.getAccount().toHexString())),
 				Updates.addToSet("posts", new ObjectId(post.get_id())));
 	}
 

@@ -199,42 +199,56 @@ public class AccountController {
         if(loggedInAs == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
         }
-        ArrayList<ObjectId> imageList = new ArrayList<>();
+        ArrayList<String> imageList = new ArrayList<>();
         Account a = db.getAccount(new ObjectId(loggedInAs));
         try {
             for (int i = 0; i < images.length; i++) {
-                imageList.add(new ObjectId(images[i]));
+                imageList.add(images[i]);
             }
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid image id");
         }
-        Post p = new Post(imageList, a.get_id(), description);
-        db.makePost(a, p);
+        Post p = new Post(imageList, a._id, description);
+        db.insertPost(p);
         ObjectNode response = om.createObjectNode();
         response.put("_id", p.get_id());
         return om.writeValueAsString(response);
     }
     
-    @GetMapping(value = "/accountposts/{account:.+}", produces = "application/json")
-    public @ResponseBody String getAccountImages(@PathVariable String account) throws JsonProcessingException {
-        Account a;
-        try {
-            a = db.getAccount(new ObjectId(account));
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid user account");
+    @GetMapping(value = "/accountposts", produces = "application/json")
+    public @ResponseBody String getAccountImages(HttpSession session) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+
+        Account account = db.getAccount(username);
+
+        if(account == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
         }
 
         ObjectNode response = om.createObjectNode();
-        if(a == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no posts on account");
-        }
 
-        ArrayList<ObjectId> p = a.getPosts();
+        ArrayList<ObjectId> p = account.getPosts();
 
         Iterator<ObjectId> posts = p.iterator();
         int postCount = 0;
         while(posts.hasNext()) {
-            response.put(String.valueOf(postCount), posts.next().toHexString());
+            Post currentPost = db.getPost(posts.next());
+            if(currentPost == null) continue;
+            ObjectNode currentArrayNode = response.putObject(String.valueOf(postCount));
+            currentArrayNode.put("postid", currentPost.get_id());
+            currentArrayNode.putPOJO("images", currentPost.getImageId());
+            currentArrayNode.put("accountid", currentPost.getAccount().toHexString());
+            currentArrayNode.put("description", currentPost.getDescription());
+            currentArrayNode.put("likes", currentPost.getLikes());
+            currentArrayNode.putPOJO("tags", currentPost.getTags());
+            currentArrayNode.put("date", currentPost.getDate().toString());
+            currentArrayNode.putPOJO("comments", currentPost.getComments());
+            currentArrayNode.putPOJO("comments", currentPost.getComments());
             postCount++;
         }
         return om.writeValueAsString(response);
