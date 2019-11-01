@@ -8,8 +8,10 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 
+import com.InstagramClone.model.Comment;
 import com.mongodb.client.model.Updates;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -125,6 +127,12 @@ public class DatabaseController {
 		accountDb.updateOne(eq("_id", account._id), Updates.addToSet("likedPosts", post._id));
 		postDb.updateOne(eq("_id", post._id), Updates.inc("likes", 1));
 	}
+
+    public void writeComment(Account account, Post post, String comment) {
+        postDb.updateOne(eq("_id", post._id),
+				Updates.addToSet("comments",
+						new Comment(account.getUsername(), comment)));
+    }
 
 	// Returns a list of posts based on a bson query
 	public FindIterable<Post> postFind(Bson query) {

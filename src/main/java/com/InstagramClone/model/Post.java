@@ -14,7 +14,7 @@ public class Post {
 	public int likes;
 	public ArrayList<String> tags;
 	public Date date;
-	public Comment comments;
+	public ArrayList<Comment> comments;
 
     public Post(ArrayList<String> images, ObjectId account, String description) {
     	this.set_id(new ObjectId());
@@ -25,6 +25,7 @@ public class Post {
     	this.likes = 0;
     	this.tags = new ArrayList<>();
     	this.setDate(new Date());
+    	this.comments = new ArrayList<>();
     }
 
     public Post() {
@@ -87,23 +88,11 @@ public class Post {
 		this.date = date;
 	}
 
-	public Comment getComments() {
+	public ArrayList<Comment> getComments() {
 		return comments;
 	}
 
-	public void setComments(Comment comments) {
+	public void setComments(ArrayList<Comment> comments) {
 		this.comments = comments;
-	}
-
-	public class Comment {
-    	public ObjectId account;
-		public Date date;
-		public String comment;
-
-		public Comment(ObjectId account, String comment) {
-			this.account = account;
-			this.comment = comment;
-			this.date = new Date();
-		}
 	}
 }

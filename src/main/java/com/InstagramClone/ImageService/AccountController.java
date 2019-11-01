@@ -254,7 +254,6 @@ public class AccountController {
             currentArrayNode.putPOJO("tags", currentPost.getTags());
             currentArrayNode.put("date", currentPost.getDate().toString());
             currentArrayNode.putPOJO("comments", currentPost.getComments());
-            currentArrayNode.putPOJO("comments", currentPost.getComments());
             postCount++;
         }
         return om.writeValueAsString(response);

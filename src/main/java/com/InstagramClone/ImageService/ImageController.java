@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import com.InstagramClone.model.Account;
+import com.InstagramClone.model.Comment;
 import com.InstagramClone.model.Post;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -114,6 +115,88 @@ public class ImageController {
             ObjectNode response = om.createObjectNode();
             response.put("_id", p.get_id());
             response.put("like", p.getLikes()+1);
+            return om.writeValueAsString(response);
+        }
+    }
+
+    @PostMapping(value = "/writecomment", produces = "application/json")
+    public @ResponseBody String writeComment(@RequestParam String postid, @RequestParam String comment, HttpSession session) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Post p;
+        Account a;
+        try {
+            p = db.getPost(new ObjectId(postid));
+            a = db.getAccount(username);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid post or account");
+        }
+
+        if(p == null || a == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
+        } else {
+            db.writeComment(a, p, comment);
+            ObjectMapper om = new ObjectMapper();
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "success");
+            return om.writeValueAsString(response);
+        }
+    }
+
+    @GetMapping(value = "/getcommentsfrompost", produces = "application/json")
+    public @ResponseBody ArrayList<Comment> getCommentsFromPost(@RequestParam String postid, HttpSession session) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        if (username == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        Account account = db.getAccount(username);
+        if (account == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
+
+        Post p;
+        try {
+            p = db.getPost(new ObjectId(postid));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid post or account");
+        }
+
+        if(p == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
+        } else {
+            return p.getComments();
+        }
+    }
+
+    @GetMapping(value = "/getpost", produces = "application/json")
+    public @ResponseBody String getPost(@RequestParam String postid, HttpSession session) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        if (username == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        Account account = db.getAccount(username);
+        if (account == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
+
+        Post p;
+        try {
+            p = db.getPost(new ObjectId(postid));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid post or account");
+        }
+
+        if(p == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
+        } else {
+            ObjectNode response = om.createObjectNode();
+            response.put("postid", p.get_id());
+            response.putPOJO("images", p.getImageId());
+            response.put("accountid", p.getAccount().toHexString());
+            response.put("description", p.getDescription());
+            response.put("likes", p.getLikes());
+            response.putPOJO("tags", p.getTags());
+            response.put("date", p.getDate().toString());
             return om.writeValueAsString(response);
         }
     }
