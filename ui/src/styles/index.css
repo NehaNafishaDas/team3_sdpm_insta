@@ -1,0 +1,69 @@
+.custom-input-error{
+    position:relative;
+    font-size: 12px;
+    text-align: left;
+    margin-top:-6px;
+    color:red;
+  }
+
+  .custom-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, .4);
+  }
+  
+  .custom-modal .modal-container {
+    position: relative;
+    background-color: white;
+    border-radius: 8px;
+    padding: 50px;
+    padding-top: 70px;
+    margin: auto;
+    top: 15vh;
+    width: 50%;
+  }
+  
+  .custom-modal .modal-container .close-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    cursor: pointer;
+  }
+  
+  .custom-modal .modal-container .data {
+    position: relative;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  
+  .custom-modal .modal-container .data span {
+    font-weight: 600;
+  }
+  
+  .custom-modal .modal-container .actions {
+    position: relative;
+  }
+  
+  .custom-modal .modal-container .actions:after {
+    content: "";
+    display: block;
+    clear: both;
+  }
+  
+  .custom-modal .modal-container .actions a {
+    display: block;
+    float: right;
+  }
+
+  .fonts {
+    font-size: 2em;
+     color: black;
+     position: absolute;
+     top: 24px;
+     right: 24px;
+     cursor: pointer;;
+  }
+  
