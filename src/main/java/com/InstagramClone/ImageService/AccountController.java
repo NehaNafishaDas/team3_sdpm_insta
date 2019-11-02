@@ -8,7 +8,6 @@ import javax.servlet.http.HttpSession;
 
 import com.InstagramClone.model.Image;
 import com.InstagramClone.model.Post;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -216,7 +215,7 @@ public class AccountController {
         Post p = new Post(imageList, a._id, description);
         db.insertPost(p);
         ObjectNode response = om.createObjectNode();
-        response.put("_id", p.get_id());
+        response.put("_id", p.get_id().toHexString());
         return om.writeValueAsString(response);
     }
 
@@ -246,7 +245,7 @@ public class AccountController {
             Post currentPost = db.getPost(posts.next());
             if (currentPost == null) continue;
             ObjectNode currentArrayNode = response.putObject(String.valueOf(postCount));
-            currentArrayNode.put("postid", currentPost.get_id());
+            currentArrayNode.put("postid", currentPost.get_id().toHexString());
             currentArrayNode.putPOJO("images", currentPost.getImageId());
             currentArrayNode.put("accountid", currentPost.getAccount().toHexString());
             currentArrayNode.put("description", currentPost.getDescription());
@@ -257,6 +256,36 @@ public class AccountController {
             postCount++;
         }
         return om.writeValueAsString(response);
+    }
+
+    @GetMapping(value = "/feed", produces = "application/json")
+    public @ResponseBody ArrayList<Post> feed(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        if (username == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        Account account = db.getAccount(username);
+        if (account == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
+
+        ObjectNode response = om.createObjectNode();
+
+        ArrayList<ObjectId> followedUsers = account.getFollowedUsers();
+        Iterator<ObjectId> followedUsersItr = followedUsers.iterator();
+        ArrayList<Post> allPosts = new ArrayList<>();
+        while(followedUsersItr.hasNext()) {
+            ObjectId currentUserId = followedUsersItr.next();
+            Account currentUser = db.getAccount(currentUserId);
+            ArrayList<ObjectId> posts = currentUser.getPosts();
+            Iterator<ObjectId> postItr = posts.iterator();
+            while(postItr.hasNext()){
+                ObjectId currentPost = postItr.next();
+                Post p = db.getPost(currentPost);
+                if(p == null) continue;
+                allPosts.add(db.getPost(currentPost));
+            }
+        }
+        return allPosts;
     }
 
     @GetMapping(value = "/accountimages")

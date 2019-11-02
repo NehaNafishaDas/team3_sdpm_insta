@@ -1,14 +1,19 @@
 package com.InstagramClone.model;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.bson.types.ObjectId;
 
 public class Post {
-
+	@JsonSerialize(using = ToStringSerializer.class)
 	public ObjectId _id;
 	public ArrayList<String> imageId;
+	@JsonSerialize(using = ToStringSerializer.class)
 	public ObjectId account;
 	public String description;
 	public int likes;
@@ -32,8 +37,8 @@ public class Post {
 
     }
 
-	public String get_id() {
-		return _id.toHexString();
+	public ObjectId get_id() {
+		return _id;
 	}
 
 	public void set_id(ObjectId _id) {
@@ -95,4 +100,7 @@ public class Post {
 	public void setComments(ArrayList<Comment> comments) {
 		this.comments = comments;
 	}
+
+
 }
+

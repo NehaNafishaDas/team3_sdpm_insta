@@ -1,4 +1,4 @@
-package com.InstagramClone.ImageService;
+package com.InstagramClone.config;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-public class CorsFilter extends OncePerRequestFilter {
+public class CorsFilterConfig extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");

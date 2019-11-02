@@ -104,23 +104,123 @@ public class ImageController {
         Account a;
         try {
             p = db.getPost(new ObjectId(postid));
-            a = db.getAccount(new ObjectId(loggedInAs));
+            a = db.getAccount(loggedInAs);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid object id");
         }
         if(p == null || a == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
         } else {
-            db.likePost(a, p);
-            ObjectNode response = om.createObjectNode();
-            response.put("_id", p.get_id());
-            response.put("like", p.getLikes()+1);
-            return om.writeValueAsString(response);
+            if(db.likePost(a, p)) {
+                ObjectNode response = om.createObjectNode();
+                response.put("_id", p.get_id().toHexString());
+                response.put("likes", p.getLikes() + 1);
+                return om.writeValueAsString(response);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "already liked");
+            }
         }
     }
 
+    @PostMapping(value = "/unlikepost", produces = "application/json")
+    public @ResponseBody String unlikePost(@RequestParam String postid,
+                                         HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if(loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Post p;
+        Account a;
+        try {
+            p = db.getPost(new ObjectId(postid));
+            a = db.getAccount(loggedInAs);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid object id");
+        }
+        if(p == null || a == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
+        } else {
+            if (db.unlikePost(a, p)) {
+                ObjectNode response = om.createObjectNode();
+                response.put("_id", p.get_id().toHexString());
+                response.put("likes", p.getLikes() - 1);
+                return om.writeValueAsString(response);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "already unliked");
+            }
+        }
+    }
+
+    @PostMapping(value = "/liketoggle", produces = "application/json")
+    public @ResponseBody String likeTogglePost(@RequestParam String postid,
+                                         HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if(loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Post p;
+        Account a;
+        try {
+            p = db.getPost(new ObjectId(postid));
+            a = db.getAccount(loggedInAs);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid object id");
+        }
+        if(p == null || a == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
+        } else {
+            ArrayList<ObjectId> likedPosts = a.getLikedPosts();
+            if(!likedPosts.contains(p._id)) {
+                db.likePost(a, p);
+                ObjectNode response = om.createObjectNode();
+                response.put("_id", p.get_id().toHexString());
+                response.put("liked", "true");
+                response.put("likes", p.getLikes() + 1);
+                return om.writeValueAsString(response);
+            } else {
+                db.unlikePost(a, p);
+                ObjectNode response = om.createObjectNode();
+                response.put("_id", p.get_id().toHexString());
+                response.put("liked", "false");
+                response.put("likes", p.getLikes() - 1);
+                return om.writeValueAsString(response);
+            }
+        }
+    }
+
+    @GetMapping(value = "/isliked", produces = "application/json")
+    public @ResponseBody String isLiked(@RequestParam String postid, HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account a;
+        ObjectId p;
+        try {
+            a = db.getAccount(loggedInAs);
+            p = new ObjectId(postid);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid object id");
+        }
+        if (a == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
+
+        ArrayList<ObjectId> likedPosts = a.getLikedPosts();
+        ObjectNode response = om.createObjectNode();
+        response.put("_id", p.toHexString());
+
+        if (likedPosts.contains(p))
+            response.put("liked", "true");
+        else
+            response.put("liked", "false");
+
+        return om.writeValueAsString(response);
+    }
+
     @PostMapping(value = "/writecomment", produces = "application/json")
-    public @ResponseBody String writeComment(@RequestParam String postid, @RequestParam String comment, HttpSession session) throws JsonProcessingException {
+    public @ResponseBody String writeComment(@RequestParam String postid,
+                                             @RequestParam String comment,
+                                             HttpSession session) throws JsonProcessingException {
         String username = (String) session.getAttribute("username");
         if(username == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
@@ -146,7 +246,9 @@ public class ImageController {
     }
 
     @GetMapping(value = "/getcommentsfrompost", produces = "application/json")
-    public @ResponseBody ArrayList<Comment> getCommentsFromPost(@RequestParam String postid, HttpSession session) throws JsonProcessingException {
+    public @ResponseBody ArrayList<Comment> getCommentsFromPost(@RequestParam String postid,
+                                                                HttpSession session)
+            throws JsonProcessingException {
         String username = (String) session.getAttribute("username");
         String userid = (String) session.getAttribute("userid");
         if (username == null)
@@ -170,7 +272,8 @@ public class ImageController {
     }
 
     @GetMapping(value = "/getpost", produces = "application/json")
-    public @ResponseBody String getPost(@RequestParam String postid, HttpSession session) throws JsonProcessingException {
+    public @ResponseBody String getPost(@RequestParam String postid, HttpSession session)
+            throws JsonProcessingException {
         String username = (String) session.getAttribute("username");
         String userid = (String) session.getAttribute("userid");
         if (username == null)
@@ -190,7 +293,7 @@ public class ImageController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
         } else {
             ObjectNode response = om.createObjectNode();
-            response.put("postid", p.get_id());
+            response.put("postid", p.get_id().toHexString());
             response.putPOJO("images", p.getImageId());
             response.put("accountid", p.getAccount().toHexString());
             response.put("description", p.getDescription());

@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import com.InstagramClone.model.Comment;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -119,13 +120,25 @@ public class DatabaseController {
 	public void insertPost(Post post) {
 		postDb.insertOne(post);
 		accountDb.updateOne(eq("_id", new ObjectId(post.getAccount().toHexString())),
-				Updates.addToSet("posts", new ObjectId(post.get_id())));
+				Updates.addToSet("posts", post.get_id()));
 	}
 
-	// TODO disallow liking a post more than once
-	public void likePost(Account account, Post post) {
-		accountDb.updateOne(eq("_id", account._id), Updates.addToSet("likedPosts", post._id));
-		postDb.updateOne(eq("_id", post._id), Updates.inc("likes", 1));
+	public boolean likePost(Account account, Post post) {
+		ArrayList<ObjectId> likedPosts = account.getLikedPosts();
+		if(!likedPosts.contains(post._id)) {
+			accountDb.updateOne(eq("_id", account._id), Updates.addToSet("likedPosts", post._id));
+			postDb.updateOne(eq("_id", post._id), Updates.inc("likes", 1));
+			return true;
+		} else return false;
+	}
+
+	public boolean  unlikePost(Account account, Post post) {
+		ArrayList<ObjectId> likedPosts = account.getLikedPosts();
+		if(likedPosts.contains(post._id)) {
+			accountDb.updateOne(eq("_id", account._id), Updates.pull("likedPosts", post._id));
+			postDb.updateOne(eq("_id", post._id), Updates.inc("likes", -1));
+			return true;
+		} else return false;
 	}
 
     public void writeComment(Account account, Post post, String comment) {
