@@ -17,7 +17,7 @@ class Login extends Component {
         axios.post(`http://13.82.84.219/signin?password=${this.state.password}&username=${this.state.username}`,{
             withCredentials: true}).then(res=>{
             console.log(res)
-            this.setState({success:res.data.status, ID :res.data.loggedInAs})
+            this.setState({success:res.data.status, ID :res.data.loggedInAs,username:res.data.username})
         }).catch(error=>{
 
         })
@@ -27,6 +27,7 @@ class Login extends Component {
     onChange = (e)=>{
         this.setState({[e.target.name]:e.target.value})
     }
+
     render() {
         return (
         <div id="body">
@@ -39,7 +40,7 @@ class Login extends Component {
             <div class="form-pointer">
                 <p class="msg">Don't have an account? <a href="/" class="link">Sign up</a></p>
             </div>
-            {this.state.success === "success"?<Redirect to={{pathname: '/home',state: {ID:this.state.ID}}} /> : null}
+            {this.state.success === "success"?<Redirect to={{pathname: '/home',state: {ID:this.state.ID,username:this.state.username}}} /> : null}
     	</div>
         );
     }

@@ -12,6 +12,7 @@ class Post extends Component {
       
     }
 
+
     checkLogin= ()=>{
         axios.get('http://13.82.84.219/loginstatus').then(res=>{
             if(res.data.status === "notloggedin"){
@@ -21,7 +22,7 @@ class Post extends Component {
         })
     }
 
-    handleModalClose(){
+    handleModalClose=()=>{
         if(this.props.handleModalClose)
             this.props.handleModalClose()
     }
@@ -35,11 +36,14 @@ class Post extends Component {
 
         axios.post(`http://13.82.84.219/imagepost`,data,{headers: {
             'Content-Type': 'multipart/form-data'
-          }}).then(res=>{
+          }}).then(res=>{    
             console.log(res)
+          console.log( this.props.getAccountPicture()) 
         }).catch(error=>{
 
         })
+
+        
 
         this.setState({description:"",selectedFile:""})
         
@@ -56,25 +60,23 @@ class Post extends Component {
 
     render() {
         return (
-            <div>
-               <div className="custom-modal">
-                <div className="modal-container">
-                    <i class="fas fa-times fonts" onClick={this.handleModalClose.bind(this)}></i>
-                    <form class="" onSubmit = {this.onSubmit}>
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="descripton" onChange = {this.onChange} placeholder="caption"/>   
-                    </div>
-                    <div class="custom-file form-group">
-                        <input type="file" class="custom-file-input" name = "images"  onChange = {this.onUpload} id="files"/>
-                        <label class="custom-file-label" for="customFile">Choose file</label>
-                    </div>
-                    <button type="submit" name = "submit" class="btn btn-primary">Submit</button>
-                    </form>
-                   
+            <div class="edit-profile-view active">
+            <div class="cancel-icon-white close-view" onClick={this.handleModalClose}></div>
+            <form class="edit-profile-form"onSubmit = {this.onSubmit}>
+                <div class="header clearfix">
+                    <div class="avatar-medium user-image"></div>
+                    <h2 class="username">ak_muheez</h2>
                 </div>
-             </div>
-
+                <label for="name">Caption</label>
+                <input type="text" name="description" class="name text-field" placeholder="muiz" onChange = {this.onChange} />
+                <label for="username">Photo</label>
+                <input type="file" class="name text-field" name = "images" id="files" onChange = {this.onUpload}/>
+                
+                <input type="submit" name="submit" class="def-button submit" value="Submit"/>
+            </form>
             </div>
+
+
         );
     }
 }

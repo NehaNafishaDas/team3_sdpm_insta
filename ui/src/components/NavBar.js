@@ -1,14 +1,21 @@
 import React, { Component } from 'react';
+import {Link} from 'react-router-dom'
 
 import Post from './Post'
 class NavBar extends Component {
     constructor(props) {
         super(props);
-        this.state = { activePostModal:false };
+        this.state = { activePostModal:false, activeNotificationModal:false };
+        this.notificationList = React.createRef();
+        this.onclickNotification = this.onclickNotification.bind(this)
     }
 
     onClickPost = ()=>{
         this.setState({activePostModal:"activePostModal"})
+    }
+
+    onclickNotification(){
+        this.notificationList.current.classList.toggle("notif-list-active");
     }
 
     handleModalClose = ()=>{
@@ -29,16 +36,9 @@ class NavBar extends Component {
                 <input type="text" class="text-field search" placeholder="Search"/>
                 <ul class="links">
                     <li class="link explore-icon explore" onClick = {this.onClickPost}></li>
-                    <li class="link notifications">
-                        <div class="like-icon"></div>
-                        <ul class="notif-list">
-                            <li class="notif clearfix">
-                                <div class="avatar-def user-image img1"></div>
-                                <div class="notif-info">
-                                    <p class="notif-msg"><span class="username">don_prince</span> started following you. <span class="notif-time">1h</span></p>
-                                    <button class="def-button follow">follow</button>
-                                </div>
-                            </li>
+                    <li class="link notifications" >
+                        <div class="like-icon" onClick = {this.onclickNotification}></div>
+                        <ul class="notif-list" ref = {this.notificationList}>
                             <li class="notif clearfix">
                                 <div class="avatar-def user-image img2"></div>
                                 <div class="notif-info">
@@ -46,13 +46,7 @@ class NavBar extends Component {
                                     <div class="notif-image"></div>
                                 </div>
                             </li>
-                            <li class="notif clearfix">
-                                <div class="avatar-def user-image"></div>
-                                <div class="notif-info">
-                                    <p class="notif-msg"><span class="username">i_am_2e</span> liked your photo. <span class="notif-time">2h</span></p>
-                                    <div class="notif-image"></div>
-                                </div>
-                            </li>
+                           
                             <li class="notif clearfix">
                                 <div class="avatar-def user-image img1"></div>
                                 <div class="notif-info">
@@ -60,26 +54,17 @@ class NavBar extends Component {
                                     <button class="def-button follow">follow</button>
                                 </div>
                             </li>
-                            <li class="notif clearfix">
-                                <div class="avatar-def user-image img2"></div>
-                                <div class="notif-info">
-                                    <p class="notif-msg"><span class="username">shades_of_lin</span> liked your photo. <span class="notif-time">3h</span></p>
-                                    <div class="notif-image"></div>
-                                </div>
-                            </li>
-                            <li class="notif clearfix">
-                                <div class="avatar-def user-image"></div>
-                                <div class="notif-info">
-                                    <p class="notif-msg"><span class="username">i_am_2e</span> liked your photo. <span class="notif-time">3h</span></p>
-                                    <div class="notif-image"></div>
-                                </div>
-                            </li>
+                           
+                        
                         </ul>
                     </li>
-                    <a href="/profile"><li class="link user-icon profile"></li></a>
+                 
+
+                    <Link to={{pathname: '/profile',state: {username:this.props.username}}} username = {this.props.username} activeClassName="current"><li class="link user-icon profile"></li></Link>
                 </ul>
+
             </div>
-            {activePostModal === "activePostModal"? <Post ID={this.props.ID} handleModalClose={this.handleModalClose.bind(this)} /> : null}
+            {activePostModal === "activePostModal"? <Post ID={this.props.ID} getAccountPicture = {this.props.getAccountPicture} handleModalClose={this.handleModalClose.bind(this)} /> : null}
         </div>
         );
     }

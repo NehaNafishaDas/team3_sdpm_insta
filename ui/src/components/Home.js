@@ -18,7 +18,7 @@ class Home extends Component {
         console.log(axios)
         axios.get('http://13.82.84.219/loginstatus').then(res=>{
             console.log(res.data.status)
-            console.log(res.data)
+                this.setState({username:res.data.user.username})
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")
             }
@@ -27,10 +27,12 @@ class Home extends Component {
         })
     }
 
+
     render() {
+       
         return (
             <div class = "container">
-                <NavBar ID = {this.props.ID}/>
+                <NavBar ID = {this.props.ID} username = {this.state.username}/>
                 <div id="body">
                     <ul class="post-list">
                         <li class="post">
