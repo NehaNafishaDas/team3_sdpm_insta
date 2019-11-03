@@ -4,27 +4,29 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
-
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.bson.types.ObjectId;
 
-public class Post {
+public class Post implements Comparable<Post> {
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ObjectId _id;
 	public ArrayList<String> imageId;
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ObjectId account;
+	public String username;
 	public String description;
 	public int likes;
 	public ArrayList<String> tags;
+	@JsonSerialize(using = ToStringSerializer.class)
 	public Date date;
 	public ArrayList<Comment> comments;
 
-    public Post(ArrayList<String> images, ObjectId account, String description) {
+    public Post(ArrayList<String> images, ObjectId account, String username , String description) {
     	this.set_id(new ObjectId());
     	this.imageId = images;
     	this.account = account;
+    	this.username = username;
     	if(description != null) this.description = description;
     	else this.description = "";
     	this.likes = 0;
@@ -59,6 +61,14 @@ public class Post {
 
 	public void setAccount(ObjectId account) {
 		this.account = account;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
 	public String getDescription() {
@@ -101,6 +111,9 @@ public class Post {
 		this.comments = comments;
 	}
 
-
+	@Override
+	public int compareTo(Post post) {
+    	return this.date.compareTo(post.date);
+	}
 }
 

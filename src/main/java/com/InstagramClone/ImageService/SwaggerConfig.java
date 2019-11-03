@@ -1,4 +1,4 @@
-package com.InstagramClone.config;
+package com.InstagramClone.ImageService;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import com.InstagramClone.model.Comment;
+import com.mongodb.client.*;
+import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.codecs.configuration.CodecProvider;
@@ -24,12 +26,6 @@ import com.InstagramClone.model.Account;
 import com.InstagramClone.model.Image;
 import com.InstagramClone.model.Post;
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 
 
 public class DatabaseController {
@@ -69,9 +65,9 @@ public class DatabaseController {
 	}
 	
 	// Insert an image object into the database given an image object
-	public void insertImage(Image image) {
-	    imageDb.insertOne(image);
-	}
+//	public void insertImage(Image image) {
+//	    imageDb.insertOne(image);
+//	}
 	
 	// Return image object given an objectid as a string
 	public Image getImage(String id) {
@@ -98,6 +94,14 @@ public class DatabaseController {
 		return "success";
 	}
 
+	public void changePassword(ObjectId targetAccount, String newPassword) {
+		accountDb.updateOne(eq("_id", targetAccount), Updates.set("password", newPassword));
+	}
+
+	public void changeEmail(ObjectId targetAccount, String newEmail) {
+		accountDb.updateOne(eq("_id", targetAccount), Updates.set("email", newEmail));
+	}
+
 	public String unfollowUser(ObjectId targetAccount, ObjectId currentAccount) {
 		accountDb.updateOne(eq("_id", currentAccount), Updates.pull("followedUsers", targetAccount));
 		return "success";
@@ -114,6 +118,14 @@ public class DatabaseController {
 
 	public Post getPost(ObjectId id){
 		return postDb.find(eq("_id", id)).first();
+	}
+
+	public void setProfilePicture(ObjectId targetAccount, String url) {
+		accountDb.updateOne(eq("_id", targetAccount), Updates.set("profilepicture", url));
+	}
+
+	public void changeBio(ObjectId targetAccount, String bio) {
+		accountDb.updateOne(eq("_id", targetAccount), Updates.set("bio", bio));
 	}
 
 	// Makes a post on the database
@@ -144,8 +156,18 @@ public class DatabaseController {
     public void writeComment(Account account, Post post, String comment) {
         postDb.updateOne(eq("_id", post._id),
 				Updates.addToSet("comments",
-						new Comment(account.getUsername(), comment)));
+						new Comment(account.getUsername(), account._id, comment)));
     }
+
+    public ArrayList<Post> getPopularPosts() {
+		FindIterable<Post> posts = postDb.find().sort(Sorts.descending("likes")).limit(9);
+		MongoCursor<Post> iterator = posts.iterator();
+		ArrayList<Post> response = new ArrayList<Post>();
+		while(iterator.hasNext()) {
+			response.add(iterator.next());
+		}
+		return response;
+	}
 
 	// Returns a list of posts based on a bson query
 	public FindIterable<Post> postFind(Bson query) {

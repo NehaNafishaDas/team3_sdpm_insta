@@ -85,7 +85,7 @@ public class ImageController {
         Map uploadResult = cloudinary.uploader().upload(images.getBytes(), ObjectUtils.emptyMap());
         ArrayList<String> imageList = new ArrayList<>();
         imageList.add((String)uploadResult.get("url"));
-        Post p = new Post(imageList, a._id, description);
+        Post p = new Post(imageList, a._id, a.getUsername(), description);
         db.insertPost(p);
         ObjectNode response = om.createObjectNode();
         response.put("status", "success");
@@ -302,5 +302,26 @@ public class ImageController {
             response.put("date", p.getDate().toString());
             return om.writeValueAsString(response);
         }
+    }
+
+    @PostMapping(value = "/uploadprofilepicture", produces = "application/json")
+    public @ResponseBody String imagePost(@RequestParam("images") MultipartFile images,
+                                          HttpSession session) throws IOException {
+        String username = (String) session.getAttribute("username");
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        if(images.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "could not accept file");
+        }
+        Account a = db.getAccount(username);
+        Map uploadResult = cloudinary.uploader().upload(images.getBytes(), ObjectUtils.emptyMap());
+        String url = (String) uploadResult.get("url");
+
+        db.setProfilePicture(a._id, url);
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "success");
+        response.put("url", url);
+        return om.writeValueAsString(response);
     }
 }
