@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import Login from './components/Auth/Login'
 import Home from './components/Home'
 import Profile from './components/Profile'
+import OtherUserProfiles from './OtherUserProfiles'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
        <Route path  = "/login" component = {Login}/>
        <Route path  = "/home" component = {Home}/>
        <Route path  = "/profile" component = {Profile}/>
+       <Route path  = "/otherusers" component = {OtherUserProfiles}/>
        </BrowserRouter>
     </div>
   );

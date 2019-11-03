@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import NavBar from './NavBar'
+import ViewComments from './ViewComments'
 import axios from 'axios'
+import LikeIcon from './LikeIcon'
+import UserFollowersList from './UserFollowersList';
 
 
 class Home extends Component {
@@ -11,14 +14,28 @@ class Home extends Component {
 
     componentWillMount(){
         this.checkLogin()
-     
+        this.getFollowersInfo()
+        
     }
 
+     
+    getFollowersInfo=()=>{
+        axios.get('http://13.82.84.219/feed').then(res=>{ 
+            console.log(res)
+            this.setState({followersData:res.data})
+            for(var i = 0;i<res.data.length; i++){
+                this.isLiked(res.data[i]._id)
+            }
+            
+           }).catch(error=>{
+   
+   
+           })  
+       }
+
     checkLogin(){
-        console.log(axios)
         axios.get('http://13.82.84.219/loginstatus').then(res=>{
-            console.log(res.data.status)
-                this.setState({username:res.data.user.username})
+                this.setState({username:res.data.username})
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")
             }
@@ -26,51 +43,27 @@ class Home extends Component {
             console.log(error)
         })
     }
-
-
+ 
     render() {
+
+    const {followersData,liked} = this.state
+        console.log(followersData)
+   
+    const followers = followersData ? ( followersData.map(follower =>{    
+
+      console.log(follower._id)
+        return( 
+           <UserFollowersList  getFollowersInfo = {this.getFollowersInfo} isLiked = {this.isLiked}  follower = {follower} keyy = {follower._id}/>
+        )
+        }) ): null
+
        
         return (
             <div class = "container">
-                <NavBar ID = {this.props.ID} username = {this.state.username}/>
+                <NavBar ID = {this.props.ID} getFollowersInfo = {this.getFollowersInfo}   />
                 <div id="body">
                     <ul class="post-list">
-                        <li class="post">
-                            <div class="post-header clearfix">
-                                <div class="user-image avatar-def img1"></div>
-                                <h4 class="username">muheez_akanni</h4>
-                                <h4 class="post-time">2h</h4>
-                            </div>
-                            <div class="post-image"></div>
-                            <h4 class="post-likes">364 likes</h4>
-                            <p class="post-caption"><span class="username">muheez_akanni</span> This picture is great!</p>
-                            <ul class="post-comments">
-                                <li class="comment"><span class="username">lolade_money</span> I know right</li>
-                                <li class="comment"><span class="username">oladips</span> Awesome!</li>
-                            </ul>
-                            <div class="post-actions clearfix">
-                                <div class="like-icon like-post"></div>
-                                <input type="text" name="comment" class="comment text-field" placeholder="Add a comment..."/>
-                            </div>
-                        </li>
-                        <li class="post">
-                            <div class="post-header clearfix">
-                                <div class="user-image avatar-def img2"></div>
-                                <h4 class="username">blawz_</h4>
-                                <h4 class="post-time">3h</h4>
-                            </div>
-                            <div class="post-image"></div>
-                            <h4 class="post-likes">85 likes</h4>
-                            <p class="post-caption"><span class="username">blawz_</span> As if you were on fire from within</p>
-                            <ul class="post-comments">
-                                <li class="comment"><span class="username">lolade_money</span> I know right</li>
-                                <li class="comment"><span class="username">oladips</span> Awesome!</li>
-                            </ul>
-                            <div class="post-actions clearfix">
-                                <div class="like-icon like-post"></div>
-                                <input type="text" name="comment" class="comment text-field" placeholder="Add a comment..."/>
-                            </div>
-                        </li>
+                        {followers}
                     </ul>
                 </div>
             </div>

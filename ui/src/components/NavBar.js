@@ -64,7 +64,7 @@ class NavBar extends Component {
                 </ul>
 
             </div>
-            {activePostModal === "activePostModal"? <Post ID={this.props.ID} getAccountPicture = {this.props.getAccountPicture} handleModalClose={this.handleModalClose.bind(this)} /> : null}
+            {activePostModal === "activePostModal"? <Post ID={this.props.ID} getFollowersInfo = {this.props.getFollowersInfo} getAccountPicture = {this.props.getAccountPicture} handleModalClose={this.handleModalClose.bind(this)} /> : null}
         </div>
         );
     }

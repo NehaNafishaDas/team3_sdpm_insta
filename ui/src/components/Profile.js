@@ -18,7 +18,6 @@ class Profile extends Component {
     componentWillMount(){
         this.checkLogin()
         this.getAccountPicture()
-        
     }
 
     onClickViewPost(id){
@@ -105,13 +104,15 @@ class Profile extends Component {
     render() {
         const {Image,userData,liked,userCommentData,username} = this.state
         const ImageList = Image.length ? ( Image.map(image =>{    
-            const id = image.postid
+            const id = image._id
             const likes = image.likes
+
+            console.log(image)
 
             const comments = image.comments.length
             console.log(comments)
         
-            const images = image.images[0].toString()
+            const images = image.imageId[0].toString()
             return( 
                       
                <ViewPicture images ={images} comment = {comments} likes = {likes} onClickViewPost = {this.onClickViewPost} keyy = {id}/>

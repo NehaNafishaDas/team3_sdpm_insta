@@ -38,7 +38,8 @@ class Post extends Component {
             'Content-Type': 'multipart/form-data'
           }}).then(res=>{    
             console.log(res)
-          console.log( this.props.getAccountPicture()) 
+            this.props.getAccountPicture()
+            this.props.getFollowersInfo()
         }).catch(error=>{
 
         })
