@@ -106,11 +106,13 @@ class OtherUserProfiles extends Component {
        // e.target.innerHTML  = "following" ?  e.target.innerHTML  = "follow" : e.target.innerHTML  = "following"
        
         const { username} = this.props.location.state
-        // axios.post(`http://13.82.84.219/followtarget?targetaccount=${username}`).then(res=>{
-
-        // }).catch(error=>{
-        //     console.log(error)
-        // })
+        axios.post(`http://13.82.84.219/followtoggle?targetaccount=${username}`).then(res=>{
+            console.log(res)
+            this.isFollowing()
+            this.getAccountProfile()
+        }).catch(error=>{
+            console.log(error)
+        })
     }
 
     isFollowing=()=>{

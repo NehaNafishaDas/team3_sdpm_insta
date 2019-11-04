@@ -26,8 +26,7 @@ class Home extends Component {
             }
             
            }).catch(error=>{
-   
-   
+
            })  
        }
 
@@ -54,8 +53,7 @@ class Home extends Component {
            <UserFollowersList username ={this.state.username} getFollowersInfo = {this.getFollowersInfo} isLiked = {this.isLiked}  follower = {follower} keyy = {follower._id}/>
         )
         }) ): null
-
-       
+  
         return (
             <div class = "container">
                 <NavBar ID = {this.props.ID} getFollowersInfo = {this.getFollowersInfo}   />
