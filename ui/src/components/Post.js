@@ -9,9 +9,9 @@ class Post extends Component {
 
     componentWillMount(){
       this.checkLogin()
+      this.getProfile()
       
     }
-
 
     checkLogin= ()=>{
         axios.get('http://13.82.84.219/loginstatus').then(res=>{
@@ -44,8 +44,6 @@ class Post extends Component {
 
         })
 
-        
-
         this.setState({description:"",selectedFile:null})
         
     }
@@ -58,15 +56,26 @@ class Post extends Component {
         this.setState({[e.target.name]:e.target.value})
     }
 
+    getProfile = ()=>{
+        const { username} = this.props
+        axios.get(`http://13.82.84.219/getuser?userid=${username}`).then(res=>{
+            this.setState({profilepicture:res.data.profilepicture})
+        })
+
+    }
+
 
     render() {
+        const {profilepicture}  = this.state
+
+         const  avatarMini = profilepicture ?  <div class="avatar-medium user-image" style={{backgroundImage : "url('" +profilepicture+ "')",backgroundSize : "cover",backgroundPosition : 'center'}}></div>:null
         return (
             <div class="edit-profile-view active">
             <div class="cancel-icon-white close-view" onClick={this.handleModalClose}></div>
             <form class="edit-profile-form"onSubmit = {this.onSubmit}>
                 <div class="header clearfix">
-                    <div class="avatar-medium user-image"></div>
-                    <h2 class="username">ak_muheez</h2>
+                   {avatarMini}
+                    <h2 class="username">{this.props.username}</h2>
                 </div>
                 <label for="name">Caption</label>
                 <input type="text" name="description" class="name text-field" placeholder="muiz" onChange = {this.onChange} />
