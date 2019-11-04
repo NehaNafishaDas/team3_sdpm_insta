@@ -18,6 +18,7 @@ class Profile extends Component {
     componentWillMount(){
         this.checkLogin()
         this.getAccountPicture()
+        this.getProfileDetails()
     }
 
     onClickViewPost(id){
@@ -25,7 +26,7 @@ class Profile extends Component {
         this.userPostDetails(id)
         this.setState({id:id})
 
-        axios.get(`http://13.82.84.219/isliked?postid=${id}`).then(res=>{
+        axios.get(`http://13.82.84.219/isliked?postid=${id}&username=${this.state.username}`).then(res=>{
             this.setState({liked:res.data.liked})
         }).catch(error=>{
 
@@ -71,15 +72,14 @@ class Profile extends Component {
         })
     }
 
-    getAccountPicture = ()=>{
-        axios.get('http://13.82.84.219/accountposts').then(res=>{
-            const Images = Object.values(res.data)
-            this.setState({Image:Images});
-
+    getProfileDetails(){
+        axios.get(`http://13.82.84.219/getuser?userid=${this.state.username}`).then(res=>{
+                console.log(res)
         }).catch(error=>{
 
         })
     }
+
 
     getComments = (id)=>{
         axios.get(`http://13.82.84.219/getcommentsfrompost?postid=${id}`).then(res=>{
@@ -97,9 +97,11 @@ class Profile extends Component {
                 this.getAccountPicture()
             }).catch(error=>{
     
-            })
-      
+            }) 
     }
+
+
+    
 
     render() {
         const {Image,userData,liked,userCommentData,username} = this.state
@@ -107,10 +109,10 @@ class Profile extends Component {
             const id = image._id
             const likes = image.likes
 
-            console.log(image)
+        //    console.log(image)
 
             const comments = image.comments.length
-            console.log(comments)
+        //    console.log(comments)
         
             const images = image.imageId[0].toString()
             return( 
@@ -144,7 +146,7 @@ class Profile extends Component {
 				<div class="profile-info">
 					{userName}
 					 <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button> 
-					<button class="def-button follow">Follow</button>
+					{/* <button class="def-button follow">Follow</button> */}
 					<div class="analysis clearfix">
 						<p class="data posts"><span class="value">{Image.length}</span> posts</p>
 						<p class="data followers"><span class="value">282</span> followers</p>
@@ -182,23 +184,27 @@ class Profile extends Component {
                             <Comments id = {this.state.id} userPostDetails = {this.userPostDetails} onClickViewPost = {this.onClickViewPost} getAccountPicture = {this.getAccountPicture}/>
 							</div>
 						</div>
-					</div>
-				
+					</div>			
 		</div>
 		
 		<div class="edit-profile-view" ref = {this.editProfile}>
 			<div class="cancel-icon-white close-view" onClick={this.handleEditModalClose}></div>
-			<form class="edit-profile-form">
+			<form class="edit-profile-form" onSubmit = {this.OnSubmitProfile}>
 				<div class="header clearfix">
 					<div class="avatar-medium user-image"></div>
 					<h2 class="username">ak_muheez</h2>
 				</div>
-				<label for="name">Name</label>
-				<input type="text" name="name" class="name text-field" placeholder="muiz"/>
+				<label for="name">First Name</label>
+				<input type="text" name="name" class="name text-field" onChange = {this.onChange} placeholder="muiz"/>
+                <label for="name">Last Name</label>
+				<input type="text" name="name" class="name text-field" onChange = {this.Onchange} placeholder="muiz"/>
 				<label for="username">Username</label>
-				<input type="text" name="username" class="username text-field" placeholder="ak_muheez"/>
+				<input type="text" name="username" class="username text-field" onChange = {this.onChange} placeholder="ak_muheez"/>
 				<label for="bio">Bio</label>
 				<textarea class="text-field bio" placeholder="Design, Code, Art"></textarea>
+                <label for="username">Profile Photo</label>
+                <input type="file" class="name text-field" name = "images" id="files" onChange = {this.onUpload}/>
+                
 				<input type="submit" name="submit" class="def-button submit" value="Submit"/>
 			</form>
 		</div>

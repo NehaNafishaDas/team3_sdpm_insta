@@ -4,7 +4,7 @@ import Layout from './components/Layout'
 import Login from './components/Auth/Login'
 import Home from './components/Home'
 import Profile from './components/Profile'
-import OtherUserProfiles from './OtherUserProfiles'
+import OtherUserProfiles from './components/OtherUserProfiles'
 
 function App() {
   return (

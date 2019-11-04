@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import NavBar from './NavBar'
-import ViewComments from './ViewComments'
 import axios from 'axios'
-import LikeIcon from './LikeIcon'
 import UserFollowersList from './UserFollowersList';
 
 
@@ -46,14 +44,14 @@ class Home extends Component {
  
     render() {
 
-    const {followersData,liked} = this.state
+    const {followersData} = this.state
         console.log(followersData)
    
     const followers = followersData ? ( followersData.map(follower =>{    
 
       console.log(follower._id)
         return( 
-           <UserFollowersList  getFollowersInfo = {this.getFollowersInfo} isLiked = {this.isLiked}  follower = {follower} keyy = {follower._id}/>
+           <UserFollowersList username ={this.state.username} getFollowersInfo = {this.getFollowersInfo} isLiked = {this.isLiked}  follower = {follower} keyy = {follower._id}/>
         )
         }) ): null
 
