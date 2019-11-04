@@ -3,24 +3,38 @@ import axios from 'axios';
 //import { NavLink } from "react-router-dom";
 import '../../styles/index.css'
 
-import InputField from '../InputField'
-
 class SignUp extends Component {
     constructor(props) {
         super(props);
         this.state = { username : "",password : "", errors:[] };
     }
 
+//   errorCheck=()=>{
+//     const {username,password} = this.state;
+//     var error = false;
+//     if(username = ""){
+//         error = "username is required"
+//     }else if(password = ""){
+//         error = "password is required"
+//     }
+//     return this.setState({error:error})
+//   }
 
     onSubmit = (e)=>{
         e.persist()
         e.preventDefault()
+
+      // const {username,password} = this.state;
+       
+    //    return password === "" ? this.setState({errors:{password:"password is required"}}) : null
+    //    return  username === "" ? this.setState({errors:{username:"password is required"}}) : null
+      //  this.errorCheck()
        
         axios.post(`http://13.82.84.219/signup?password=${this.state.password}&username=${this.state.username}`,{headers:{'Content-Type':'Application/json'}}).then(res=>{
-            this.setState({errors:[{username:res.data.username,password:res.data.password}]})
-
+            this.setState({errors:res.data})
+            console.log(res)
         }).catch(error=>{
-            console.log(error)
+
         })
 
         this.setState({
@@ -36,19 +50,17 @@ class SignUp extends Component {
 
     render() {
         const {errors} = this.state
-        console.log(this.state)
-     
-       
+        console.log(errors)
+        
         return (
             <div id="body">
                 <form class="signup-form" onSubmit = {this.onSubmit}>
                     <div class="insta-logo-type"></div>
-                    <InputField errors = {this.state.errors} name="firstname">
-                        <input type="text" value = {this.state.username} name="username" class="text-field username" placeholder="Username" onChange={this.onChange}/>
-                    </InputField>
-                    <InputField errors = {this.state.errors} name="password">
+                    {  this.state.errors ? <p className="custom-input-error">{errors.error}</p> : null  }
+                    {  this.state.errors ? <p className="custom-input-error">{errors.username}</p> : null  }
+                    <input type="text" value = {this.state.username} name="username" class="text-field username" placeholder="Username" onChange={this.onChange}/>
+                    {  this.state.errors ? <p className="custom-input-error">{errors.password}</p> : null  }
                     <input type="password" value= {this.state.password} name="password" class="text-field password" placeholder="Password" onChange={this.onChange}/>
-                    </InputField>
                     <input type="submit" name="signup" class="def-button signup" value="Sign up"/>
                 </form>
                 <div class="form-pointer">

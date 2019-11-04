@@ -27,12 +27,12 @@ class NavBar extends Component {
         return (
             <div id="top">
             <div class="topbar clearfix">
-                <a href="index.html">
+                <Link to  = {{pathname: '/home'}}>
                     <ul class="brands clearfix">
                         <li class="insta-logo"></li>
                         <li class="insta-logo-type"></li>
                     </ul>
-                </a>
+                </Link>
                 <input type="text" class="text-field search" placeholder="Search"/>
                 <ul class="links">
                     <li class="link explore-icon explore" onClick = {this.onClickPost}></li>
