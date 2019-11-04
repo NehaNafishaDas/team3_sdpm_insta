@@ -8,6 +8,8 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -75,13 +77,28 @@ public class DatabaseController {
 	}
 	
 	// Create an account from a given account object
-	public String createAccount(Account account) {
+	public String createAccount(Account account) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		md.update(account.getPassword().getBytes());
+		byte[] digest = md.digest();
+		StringBuffer sb = new StringBuffer();
+		for (byte b : digest) {
+			sb.append(String.format("%02x", b & 0xff));
+		}
+		account.setPassword(sb.toString());
 		accountDb.insertOne(account);
 		return account.get_id();
 	}
 	
-	public Account checkAccount(String username, String password) {
-		Account login = accountDb.find(and(eq("username", username), eq("password", password))).first();
+	public Account checkAccount(String username, String password) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		md.update(password.getBytes());
+		byte[] digest = md.digest();
+		StringBuffer sb = new StringBuffer();
+		for (byte b : digest) {
+			sb.append(String.format("%02x", b & 0xff));
+		}
+		Account login = accountDb.find(and(eq("username", username), eq("password", sb.toString()))).first();
 		if(login != null) {
 			return login;
 		} else {
@@ -91,6 +108,7 @@ public class DatabaseController {
 
 	public String followUser(ObjectId targetAccount, ObjectId currentAccount) {
 		accountDb.updateOne(eq("_id", currentAccount), Updates.addToSet("followedUsers", targetAccount));
+		accountDb.updateOne(eq("_id", targetAccount), Updates.addToSet("followedBy", currentAccount));
 		return "success";
 	}
 
@@ -104,6 +122,7 @@ public class DatabaseController {
 
 	public String unfollowUser(ObjectId targetAccount, ObjectId currentAccount) {
 		accountDb.updateOne(eq("_id", currentAccount), Updates.pull("followedUsers", targetAccount));
+		accountDb.updateOne(eq("_id", targetAccount), Updates.pull("followedBy", currentAccount));
 		return "success";
 	}
 	// Return account object given an objectid
@@ -126,6 +145,14 @@ public class DatabaseController {
 
 	public void changeBio(ObjectId targetAccount, String bio) {
 		accountDb.updateOne(eq("_id", targetAccount), Updates.set("bio", bio));
+	}
+
+	public void changeFirstname(ObjectId targetAccount, String firstname) {
+		accountDb.updateOne(eq("_id", targetAccount), Updates.set("firstName", firstname));
+	}
+
+	public void changeLastname(ObjectId targetAccount, String lastname) {
+		accountDb.updateOne(eq("_id", targetAccount), Updates.set("lastName", lastname));
 	}
 
 	// Makes a post on the database
@@ -159,6 +186,12 @@ public class DatabaseController {
 						new Comment(account.getUsername(), account._id, comment)));
     }
 
+	public void writeComment(Account account, Post post, String comment, String imageUrl) {
+		postDb.updateOne(eq("_id", post._id),
+				Updates.addToSet("comments",
+						new Comment(account.getUsername(), account._id, comment, imageUrl)));
+	}
+
     public ArrayList<Post> getPopularPosts() {
 		FindIterable<Post> posts = postDb.find().sort(Sorts.descending("likes")).limit(9);
 		MongoCursor<Post> iterator = posts.iterator();
@@ -181,4 +214,6 @@ public class DatabaseController {
   
         return single_instance; 
     }
+
+
 }

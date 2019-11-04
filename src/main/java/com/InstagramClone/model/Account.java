@@ -23,6 +23,8 @@ public class Account {
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ArrayList<ObjectId> followedUsers;
 	@JsonSerialize(using = ToStringSerializer.class)
+	public ArrayList<ObjectId> followedBy;
+	@JsonSerialize(using = ToStringSerializer.class)
 	public ArrayList<ObjectId> likedPosts;
     
     public Account(String username, String password) {
@@ -36,6 +38,7 @@ public class Account {
     	this.lastName = "";
     	this.posts = new ArrayList<>();
     	this.followedUsers = new ArrayList<>();
+    	this.followedBy = new ArrayList<>();
     	this.likedPosts = new ArrayList<>();
     	this.postCount = 0;
     }
@@ -113,6 +116,14 @@ public class Account {
 	public void setFollowedUsers(ArrayList<ObjectId> followedUsers) {
     	this.followedUsers = followedUsers;
     }
+
+	public ArrayList<ObjectId> getFollowedBy() {
+		return followedBy;
+	}
+
+	public void setFollowedBy(ArrayList<ObjectId> followedBy) {
+		this.followedBy = followedBy;
+	}
 
 	public ArrayList<ObjectId> getLikedPosts() {
 		return likedPosts;

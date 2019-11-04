@@ -13,12 +13,22 @@ public final class Comment {
     private String comment;
     @JsonSerialize(using = ToStringSerializer.class)
     private Date date;
+    private String image;
 
     public Comment(String username, ObjectId userid, String comment) {
         this.username = username;
         this.userid = userid;
         this.comment = comment;
         this.date = new Date();
+        this.image = "";
+    }
+
+    public Comment(String username, ObjectId userid, String comment, String imageUrl) {
+        this.username = username;
+        this.userid = userid;
+        this.comment = comment;
+        this.date = new Date();
+        this.image = imageUrl;
     }
 
     public Comment() {
@@ -55,5 +65,13 @@ public final class Comment {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 }

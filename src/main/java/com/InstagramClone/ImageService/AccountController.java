@@ -1,45 +1,61 @@
 package com.InstagramClone.ImageService;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import com.InstagramClone.model.Image;
 import com.InstagramClone.model.Post;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.InstagramClone.model.Account;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class AccountController {
     private ObjectMapper om = new ObjectMapper();
     private final DatabaseController db = DatabaseController.getInstance();
+    private Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+            "cloud_name", "dongodxek",
+            "api_key", "473417739651645",
+            "api_secret", "C6P529y3ejZcBSeVyqh-4Opeo1w"));
 
     // Creates account given a username and password
     @PostMapping(value = "/signup", produces = "application/json")
-    public String signUp(@RequestParam String username, @RequestParam String password) throws JsonProcessingException {
+    public String signUp(@RequestParam String username, @RequestParam String password) throws JsonProcessingException, NoSuchAlgorithmException {
+        ObjectNode response = om.createObjectNode();
+
+        if(username.equals("")){
+            response.put("username", "Username is required");
+        }
+        if(password.equals("")){
+            response.put("password", "Password is required");
+        }
+        if(response.size()>0) return om.writeValueAsString(response);
+
+        if(username == null || password == null){
+            response.put("status", "failed");
+            response.put("error", "Please enter both a username and password");
+            return om.writeValueAsString(response);
+        }
         Account account = new Account(username, password);
         if (db.getAccount(username) != null) {
-            ObjectNode response = om.createObjectNode();
             response.put("status", "failed");
             response.put("error", "Account already exists with username " + username);
             return om.writeValueAsString(response);
         } else {
-            ObjectNode response = om.createObjectNode();
             String id = db.createAccount(account);
             response.put("status", "success");
             response.put("username", username);
@@ -49,8 +65,13 @@ public class AccountController {
     }
 
     @PostMapping(value = "/signin", produces = "application/json")
-    public String signIn(@RequestParam String username, @RequestParam String password, HttpSession session) throws JsonProcessingException {
-        DatabaseController db = DatabaseController.getInstance();
+    public String signIn(@RequestParam String username, @RequestParam String password, HttpSession session) throws JsonProcessingException, NoSuchAlgorithmException {
+        if(username == null || password == null){
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "failed");
+            response.put("error", "Please enter both a username and password");
+            return om.writeValueAsString(response);
+        }
         String loggedInAs = (String) session.getAttribute("Username");
 
         ObjectNode response = om.createObjectNode();
@@ -181,7 +202,114 @@ public class AccountController {
         }
     }
 
+    @PutMapping(value = "/updateprofile", produces = "application/json")
+    public String updateProfile(@RequestParam(required = false) String firstname,
+                                @RequestParam(required = false) String lastname,
+                                @RequestParam(required = false) String email,
+                                @RequestParam(required = false) String bio,
+                                @RequestBody(required = false) MultipartFile image,
+                                HttpSession session) throws IOException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        ObjectNode response = om.createObjectNode();
+        if (username == null) {
+            response.put("status", "failed");
+            response.put("error", "Not logged in");
+            return om.writeValueAsString(response);
+        } else {
+            Account a = db.getAccount(username);
+            if(a == null) {
+                response.put("status", "failed");
+                response.put("error", "could not find accounts");
+                return om.writeValueAsString(response);
+            }
 
+            if (firstname != null) {
+                db.changeFirstname(a._id, firstname);
+                response.put("firstname", "updated");
+            }
+            if (lastname != null) {
+                db.changeLastname(a._id, lastname);
+                response.put("lastname", "updated");
+            }
+            if (email != null) {
+                db.changeEmail(a._id, email);
+                response.put("email", "updated");
+            }
+            if (bio != null) {
+                db.changeBio(a._id, bio);
+                response.put("bio", "updated");
+            }
+            if(image != null) {
+                Map uploadResult = cloudinary.uploader()
+                        .upload(image.getBytes(), ObjectUtils.emptyMap());
+                String url = (String) uploadResult.get("url");
+                db.setProfilePicture(a._id, url);
+                response.put("image", "updated");
+            }
+            return om.writeValueAsString(response);
+        }
+    }
+
+    @PostMapping(value = "/followtoggle", produces = "application/json")
+    public String followToggle(@RequestParam String targetaccount, HttpSession session) throws IOException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        ObjectNode response = om.createObjectNode();
+        if (username == null) {
+            response.put("status", "failed");
+            response.put("error", "Not logged in");
+            return om.writeValueAsString(response);
+        } else {
+            Account a = db.getAccount(username);
+            Account target = db.getAccount(targetaccount);
+            if(a == null || target == null) {
+                response.put("status", "failed");
+                response.put("error", "could not find accounts");
+                return om.writeValueAsString(response);
+            }
+            if(!a.followedUsers.contains(target._id)) {
+                db.followUser(target._id, a._id);
+                response.put("status", "success");
+                response.put("error", "Now following user " + targetaccount);
+                return om.writeValueAsString(response);
+            } else {
+                db.unfollowUser(target._id, a._id);
+                response.put("status", "success");
+                response.put("error", "Unfollowed user " + targetaccount);
+                return om.writeValueAsString(response);
+            }
+        }
+    }
+
+    @GetMapping(value = "/isfollowing", produces = "application/json")
+    public String isFollowing(@RequestParam String targetaccount, HttpSession session ) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        String userid = (String) session.getAttribute("userid");
+        ObjectNode response = om.createObjectNode();
+        if (username == null) {
+            response.put("status", "failed");
+            response.put("error", "Not logged in");
+            return om.writeValueAsString(response);
+        } else {
+            Account user = db.getAccount(username);
+            Account target = db.getAccount(targetaccount);
+            if(user == null || target == null) {
+                response.put("status", "failed");
+                response.put("error", "User not found");
+                return om.writeValueAsString(response);
+            }
+            if (user.followedUsers.contains(target._id)) {
+                response.put("isfollowing", true);
+                response.put("account", targetaccount);
+                return om.writeValueAsString(response);
+            } else {
+                response.put("isfollowing", false);
+                response.put("account", targetaccount);
+                return om.writeValueAsString(response);
+            }
+        }
+    }
     @PostMapping(value = "/follow", produces = "application/json")
     public String followuser(@RequestParam String targetaccount,
                              HttpSession session) throws JsonProcessingException {
@@ -259,7 +387,10 @@ public class AccountController {
     @GetMapping(value = "/getuser", produces = "application/json")
     public @ResponseBody
     String getUser(@RequestParam String userid) throws IOException {
-        Account account = db.getAccount(new ObjectId(userid));
+        if(userid == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "no userid received");
+
+        Account account = db.getAccount(userid);
         ObjectNode response = om.createObjectNode();
         response.put("_id", account.get_id());
         response.put("username", account.getUsername());
@@ -268,6 +399,16 @@ public class AccountController {
         response.put("bio", account.getBio());
         response.put("email", account.getEmail());
         response.put("profilepicture", account.getProfilepicture());
+        response.put("followercount", account.getFollowedBy().size());
+        response.put("followingcount", account.getFollowedUsers().size());
+        ArrayList<ObjectId> postids = account.getPosts();
+        Iterator<ObjectId> iterator = postids.iterator();
+        ArrayList<Post> posts = new ArrayList<>();
+        while(iterator.hasNext()) {
+            Post p = db.getPost(iterator.next());
+            posts.add(p);
+        }
+        response.putPOJO("posts", posts);
         return om.writeValueAsString(response);
     }
 
@@ -298,7 +439,7 @@ public class AccountController {
 
     @GetMapping(value = "/accountposts", produces = "application/json")
     public @ResponseBody
-    ArrayList<Post> getAccountPosts(HttpSession session) throws JsonProcessingException {
+    String getAccountPosts(HttpSession session) throws JsonProcessingException {
         String username = (String) session.getAttribute("username");
         String userid = (String) session.getAttribute("userid");
         if (username == null)
@@ -307,8 +448,18 @@ public class AccountController {
         if (account == null)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
 
-        ArrayList<Post> allPosts = new ArrayList<>();
+        ObjectNode response = om.createObjectNode();
+        response.put("_id", account.get_id());
+        response.put("username", account.getUsername());
+        response.put("firstName", account.getFirstName());
+        response.put("lastName", account.getLastName());
+        response.put("bio", account.getBio());
+        response.put("email", account.getEmail());
+        response.put("profilepicture", account.getProfilepicture());
+        response.put("followercount", account.getFollowedBy().size());
+        response.put("followingcount", account.getFollowedUsers().size());
 
+        ArrayList<Post> allPosts = new ArrayList<>();
         ArrayList<ObjectId> myPosts = account.getPosts();
         Iterator<ObjectId> myPostItr = myPosts.iterator();
         while(myPostItr.hasNext()){
@@ -318,7 +469,8 @@ public class AccountController {
             allPosts.add(db.getPost(currentPost));
         }
         Collections.sort(allPosts, Collections.reverseOrder());
-        return allPosts;
+        response.putPOJO("posts", allPosts);
+        return om.writeValueAsString(response);
     }
 
     @GetMapping(value = "/feed", produces = "application/json")

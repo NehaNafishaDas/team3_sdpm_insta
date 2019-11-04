@@ -189,15 +189,11 @@ public class ImageController {
     }
 
     @GetMapping(value = "/isliked", produces = "application/json")
-    public @ResponseBody String isLiked(@RequestParam String postid, HttpSession session) throws JsonProcessingException {
-        String loggedInAs = (String) session.getAttribute("username");
-        if (loggedInAs == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
-        }
+    public @ResponseBody String isLiked(@RequestParam String postid, @RequestParam String username) throws JsonProcessingException {
         Account a;
         ObjectId p;
         try {
-            a = db.getAccount(loggedInAs);
+            a = db.getAccount(username);
             p = new ObjectId(postid);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid object id");
@@ -220,7 +216,8 @@ public class ImageController {
     @PostMapping(value = "/writecomment", produces = "application/json")
     public @ResponseBody String writeComment(@RequestParam String postid,
                                              @RequestParam String comment,
-                                             HttpSession session) throws JsonProcessingException {
+                                             @RequestBody(required = false) MultipartFile image,
+                                             HttpSession session) throws IOException {
         String username = (String) session.getAttribute("username");
         if(username == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
@@ -237,7 +234,13 @@ public class ImageController {
         if(p == null || a == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
         } else {
-            db.writeComment(a, p, comment);
+            if(image != null) {
+                Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
+                String imageUrl = (String) uploadResult.get("url");
+                db.writeComment(a, p, comment, imageUrl);
+            } else {
+                db.writeComment(a, p, comment);
+            }
             ObjectMapper om = new ObjectMapper();
             ObjectNode response = om.createObjectNode();
             response.put("status", "success");
@@ -246,17 +249,7 @@ public class ImageController {
     }
 
     @GetMapping(value = "/getcommentsfrompost", produces = "application/json")
-    public @ResponseBody ArrayList<Comment> getCommentsFromPost(@RequestParam String postid,
-                                                                HttpSession session)
-            throws JsonProcessingException {
-        String username = (String) session.getAttribute("username");
-        String userid = (String) session.getAttribute("userid");
-        if (username == null)
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
-        Account account = db.getAccount(username);
-        if (account == null)
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
-
+    public @ResponseBody ArrayList<Comment> getCommentsFromPost(@RequestParam String postid) {
         Post p;
         try {
             p = db.getPost(new ObjectId(postid));
@@ -272,16 +265,8 @@ public class ImageController {
     }
 
     @GetMapping(value = "/getpost", produces = "application/json")
-    public @ResponseBody String getPost(@RequestParam String postid, HttpSession session)
+    public @ResponseBody String getPost(@RequestParam String postid)
             throws JsonProcessingException {
-        String username = (String) session.getAttribute("username");
-        String userid = (String) session.getAttribute("userid");
-        if (username == null)
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
-        Account account = db.getAccount(username);
-        if (account == null)
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
-
         Post p;
         try {
             p = db.getPost(new ObjectId(postid));
