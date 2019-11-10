@@ -44,6 +44,8 @@ class Post extends Component {
 
         })
 
+        
+
         this.setState({description:"",selectedFile:null})
         
     }
@@ -64,6 +66,15 @@ class Post extends Component {
 
     }
 
+    getLocation=()=>{
+        navigator.geolocation.getCurrentPosition((position)=>{
+            axios.get(`https://us1.locationiq.com/v1/reverse.php?key=3858248baae9c2&lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`,{
+                withCredentials: false}).then(res=>{
+                console.log(res.data.address)
+                this.setState({address:res.data.address})
+            })     
+        })
+    }
 
     render() {
         const {profilepicture}  = this.state
@@ -81,8 +92,13 @@ class Post extends Component {
                 <input type="text" name="description" class="name text-field" placeholder="muiz" onChange = {this.onChange} />
                 <label for="username">Photo</label>
                 <input type="file" class="name text-field" name = "images" id="files" onChange = {this.onUpload}/>
-                
+                <button class="def-button submit">Send Location</button>
+                {/* <select  onChange = {this.onChange} value={departments.department_name} class="name text-field">
+                    <option selected>Select Your Location</option>
+                    {departmentList}
+                 </select> */}
                 <input type="submit" name="submit" class="def-button submit" value="Submit"/>
+                
             </form>
             </div>
 

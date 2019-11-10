@@ -208,7 +208,8 @@ class OtherUserProfiles extends Component {
                                 <div class="post-actions clearfix">
                                 {liked === "true"? <LikeIcon onLikePost = {this.onLikePost}/>: <div class="like-icon like-post " onClick = {this.onLikePost}></div>}
                                 <Comments id = {this.state.id} userPostDetails = {this.userPostDetails} onClickViewPost = {this.onClickViewPost} getAccountPicture = {this.getAccountPicture}/>
-                                </div>
+                                <i class="fas fa-images add-button"></i>
+                                 </div>
                             </div>
                         </div>			
             </div>

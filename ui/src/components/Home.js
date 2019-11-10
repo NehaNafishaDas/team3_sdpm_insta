@@ -3,7 +3,7 @@ import NavBar from './NavBar'
 import axios from 'axios'
 import UserFollowersList from './UserFollowersList';
 
-
+axios.defaults.withCredentials = true;
 class Home extends Component {
     constructor(props) {
         super(props);
@@ -13,13 +13,13 @@ class Home extends Component {
     componentWillMount(){
         this.checkLogin()
         this.getFollowersInfo()
+      //  this.getLocation()
         
     }
 
      
     getFollowersInfo=()=>{
         axios.get('http://13.82.84.219/feed').then(res=>{ 
-            console.log(res)
             this.setState({followersData:res.data})
             for(var i = 0;i<res.data.length; i++){
                 this.isLiked(res.data[i]._id)
@@ -28,7 +28,11 @@ class Home extends Component {
            }).catch(error=>{
 
            })  
-       }
+          
+
+       
+    }
+    
 
     checkLogin(){
         axios.get('http://13.82.84.219/loginstatus').then(res=>{
@@ -44,11 +48,7 @@ class Home extends Component {
     render() {
 
     const {followersData} = this.state
-        console.log(followersData)
-   
     const followers = followersData ? ( followersData.map(follower =>{    
-
-      console.log(follower._id)
         return( 
            <UserFollowersList username ={this.state.username} getFollowersInfo = {this.getFollowersInfo} isLiked = {this.isLiked}  follower = {follower} keyy = {follower._id}/>
         )

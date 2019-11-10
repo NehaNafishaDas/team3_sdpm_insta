@@ -58,8 +58,7 @@ class NavBar extends Component {
                         
                         </ul>
                     </li>
-                 
-
+   
                     <Link to={{pathname: '/profile',state: {username:this.props.username}}} username = {this.props.username} activeClassName="current"><li class="link user-icon profile"></li></Link>
                 </ul>
 

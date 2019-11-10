@@ -4,11 +4,12 @@ import axios from 'axios'
 import ViewPicture from './ViewPicture';
 import LikeIcon from './LikeIcon';
 import Comments from './Comments';
+import CommentWithImage from './CommentWithImage'
 
 class Profile extends Component {
     constructor(props) {
         super(props);
-        this.state = { activeViewPost:false,activeHover:null, Image:[] ,imagePost:null ,activeLike:null,selectedFile:null};
+        this.state = { activeViewPost:false,activeHover:null, activeCommentWithPictureModal:false,Image:[] ,imagePost:null ,activeLike:null,selectedFile:null};
         this.viewPost = React.createRef();
         this.editProfile = React.createRef();
         this.onClickViewPost = this.onClickViewPost.bind(this)
@@ -45,6 +46,10 @@ class Profile extends Component {
 
     handlePostModalClose = ()=>{
         this.viewPost.current.classList.remove('view-post-active');
+    }
+
+    handleModalClose=()=>{
+        this.setState({ activeCommentWithPictureModal:false})
     }
 
     handleEditModalClose = ()=>{
@@ -130,8 +135,14 @@ class Profile extends Component {
        this.setState({firstname:'',lastname:'',bio:'',email: ''})
     }
 
+    commentingWithPicture=()=>{
+        this.setState({ activeCommentWithPictureModal : "activeCommentingWithPictureModal"})
+
+      
+    }
+
     render() {
-        const {Image,userData,liked,userCommentData,username,userDetails} = this.state
+        const {Image,userData,liked,userCommentData,username,userDetails,activeCommentWithPictureModal} = this.state
         console.log(this.state)
         const ImageList = Image.length ? ( Image.map(image =>{    
             const id = image._id
@@ -145,12 +156,21 @@ class Profile extends Component {
             }) ): null
 
 
-            const CommentList = userCommentData ? ( userCommentData.map(comment =>{    
+            const CommentList = userCommentData ? ( userCommentData.map(comment =>{  
+                if(comment.comment !== "" )    
                 return( 
-                    <li class="comment"><span class="username">{comment.username}</span> {comment.comment}</li>
+                    
+                    <li class="comment"><span class="username">{comment.username}</span> "{comment.comment}"</li>
                 )
                 }) ): null
 
+                const CommentImage = userCommentData ? ( userCommentData.map(comment =>{    
+                    if(comment.image)  
+                    return( 
+                        <li  class="comment" style = {{maxWidth:300}}> <span class="username">{comment.username}  </span><img src ={comment.image} style = {{maxWidth:300}}alt = "...."/></li>
+                    )
+                    }) ): null
+    
 
 
         const UserDetail = userData?<div class="post-image" style={{backgroundImage : "url('" +userData.images[0]+ "')",backgroundSize : "cover",backgroundPosition : 'center'}} ></div>:null
@@ -206,11 +226,13 @@ class Profile extends Component {
 							</div>
 							{caption}
 							<ul class="post-comments">
-								{CommentList}
+                                {CommentList}
+                                {CommentImage}
 							</ul>
 							<div class="post-actions clearfix">
                             {liked === "true"? <LikeIcon onLikePost = {this.onLikePost}/>: <div class="like-icon like-post " onClick = {this.onLikePost}></div>}
                             <Comments id = {this.state.id} userPostDetails = {this.userPostDetails} onClickViewPost = {this.onClickViewPost} getAccountPicture = {this.getAccountPicture}/>
+                            <i class="fas fa-images add-button" onClick={this.commentingWithPicture}></i>
 							</div>
 						</div>
 					</div>			
@@ -237,7 +259,7 @@ class Profile extends Component {
 		</div>
        
 	</div>
-   
+    {activeCommentWithPictureModal==="activeCommentingWithPictureModal"?<CommentWithImage getComments = {this.getComments} id = {this.state.id} handleModalClose = {this.handleModalClose}/>:null}
         </div>
          
         );
