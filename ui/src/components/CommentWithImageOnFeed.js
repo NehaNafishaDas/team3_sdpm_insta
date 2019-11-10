@@ -32,8 +32,6 @@ class CommentWithImageOnFeed extends Component {
         }).catch(error=>{
 
         })
-      
-           
         
         this.handleModalClose()
        

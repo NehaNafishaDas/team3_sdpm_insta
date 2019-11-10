@@ -46,12 +46,13 @@ class UserFollowersList extends Component {
    
     render() {
         const {liked,  activeCommentWithPictureModal} = this.state
+        const location =  this.props.follower.location ?  <p>{this.props.follower.location}</p>: null
         return (
             <li class="post">
             <div class="post-header clearfix">
                 <div class="user-image avatar-def img1"></div>
                 <Link to={{pathname: '/otherusers',state: {username:this.props.follower.username}}} activeClassName="current"><h4 class="username">{this.props.follower.username}</h4></Link>
-                <p>Philadephia,Pennysylvania</p>
+                {location}
                 <h4 class="post-time">{this.props.follower.date}</h4>
             </div>
             <div class="post-image"style={{backgroundImage : "url('" +this.props.follower.imageId+ "')",backgroundSize : "cover",backgroundPosition : 'center'}} ></div>

@@ -28,9 +28,6 @@ class Home extends Component {
            }).catch(error=>{
 
            })  
-          
-
-       
     }
     
 
@@ -56,7 +53,7 @@ class Home extends Component {
   
         return (
             <div class = "container">
-                <NavBar ID = {this.props.ID} getFollowersInfo = {this.getFollowersInfo}   />
+                <NavBar ID = {this.props.ID} getFollowersInfo = {this.getFollowersInfo} />
                 <div id="body">
                     <ul class="post-list">
                         {followers}

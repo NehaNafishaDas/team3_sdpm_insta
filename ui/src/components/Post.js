@@ -10,6 +10,7 @@ class Post extends Component {
     componentWillMount(){
       this.checkLogin()
       this.getProfile()
+      this.getLocation()
       
     }
 
@@ -33,6 +34,7 @@ class Post extends Component {
         var data = new FormData()
         data.append("images",this.state.selectedFile)
         data.append("description",this.state.description)
+        data.append("location",this.state.location)
 
         axios.post(`http://13.82.84.219/imagepost`,data,{headers: {
             'Content-Type': 'multipart/form-data'
@@ -43,8 +45,6 @@ class Post extends Component {
         }).catch(error=>{
 
         })
-
-        
 
         this.setState({description:"",selectedFile:null})
         
@@ -77,9 +77,18 @@ class Post extends Component {
     }
 
     render() {
-        const {profilepicture}  = this.state
-
-         const  avatarMini = profilepicture ?  <div class="avatar-medium user-image" style={{backgroundImage : "url('" +profilepicture+ "')",backgroundSize : "cover",backgroundPosition : 'center'}}></div>:null
+        const {profilepicture,address}  = this.state
+        console.log(address)
+       
+       console.log(this.state)
+        const state = address ? <option name = "location" onChange = {this.onChange} value={address.state}>{address.state}</option>:null
+        const country= address ? <option name = "location" onChange = {this.onChange} value={address.country}>{address.country}</option>:null
+        const city = address ? <option name = "location" onChange = {this.onChange} value={address.city}>{address.city}</option>:null
+        const county = address ? <option name = "location" onChange = {this.onChange} value={address.county}>{address.county}</option>:null
+        const neighbourhood = address ? <option name = "location" onChange = {this.onChange} value={address.neighbourhood}>{address.neighbourhood}</option>:null
+        const road = address ? <option name = "location" onChange = {this.onChange} value={address.road}>{address.road}</option>:null
+    
+        const  avatarMini = profilepicture ?  <div class="avatar-medium user-image" style={{backgroundImage : "url('" +profilepicture+ "')",backgroundSize : "cover",backgroundPosition : 'center'}}></div>:null
         return (
             <div class="edit-profile-view active">
             <div class="cancel-icon-white close-view" onClick={this.handleModalClose}></div>
@@ -92,11 +101,15 @@ class Post extends Component {
                 <input type="text" name="description" class="name text-field" placeholder="muiz" onChange = {this.onChange} />
                 <label for="username">Photo</label>
                 <input type="file" class="name text-field" name = "images" id="files" onChange = {this.onUpload}/>
-                <button class="def-button submit">Send Location</button>
-                {/* <select  onChange = {this.onChange} value={departments.department_name} class="name text-field">
+                <select name = "location" onChange = {this.onChange}  class="name text-field">
                     <option selected>Select Your Location</option>
-                    {departmentList}
-                 </select> */}
+                   {state}
+                   {country}
+                   {city}
+                   {county}
+                   {neighbourhood}
+                   {road}
+                </select>
                 <input type="submit" name="submit" class="def-button submit" value="Submit"/>
                 
             </form>

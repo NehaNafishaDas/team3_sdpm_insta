@@ -143,12 +143,15 @@ class Profile extends Component {
 
     render() {
         const {Image,userData,liked,userCommentData,username,userDetails,activeCommentWithPictureModal} = this.state
-        console.log(this.state)
+       console.log(userData)
+
+
         const ImageList = Image.length ? ( Image.map(image =>{    
             const id = image._id
             const likes = image.likes
             const comments = image.comments.length
             const images = image.imageId[0].toString()
+            console.log(image.location)
             return( 
                       
                <ViewPicture images ={images} comment = {comments} likes = {likes} onClickViewPost = {this.onClickViewPost} keyy = {id}/>
@@ -160,7 +163,7 @@ class Profile extends Component {
                 if(comment.comment !== "" )    
                 return( 
                     
-                    <li class="comment"><span class="username">{comment.username}</span> "{comment.comment}"</li>
+                    <li class="comment"><span class="username">{comment.username}</span> {comment.comment}</li>
                 )
                 }) ): null
 
@@ -185,6 +188,7 @@ class Profile extends Component {
         const name = userDetails ? <p class="name">{userDetails.firstName} {userDetails.lastName}  </p> : null
         const avatarMedium = userDetails ? <div class="avatar-medium user-image"  style={{backgroundImage : "url('" + userDetails.profilepicture + "')",backgroundSize : "cover",backgroundPosition : 'center'}}>></div>: null
         const avatar = userDetails ?  <div class="avatar-display user-image" style={{backgroundImage : "url('" + userDetails.profilepicture + "')",backgroundSize : "cover",backgroundPosition : 'center'}}></div>:null
+        const location =  userData?  <p style = {{fontSize: 13, paddingTop:4}}>{userData.location}</p>: null
             return (
             <div class = "container">
             <NavBar  username = {this.state.username}  getAccountPicture = {this.getAccountPicture}/>
@@ -217,8 +221,9 @@ class Profile extends Component {
 						{UserDetail}
 						<div class="post-view-details">
                         <div class="header clearfix">
-								<div class="avatar-medium user-image"></div>
-								{smallFontUserName}
+								<div class="avatar-medium user-image"></div>   
+                                {smallFontUserName}
+                                {location}
 							</div>
 							<div class="post-analysis clearfix">
                                 {UserLike}
