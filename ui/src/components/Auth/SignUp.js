@@ -30,7 +30,7 @@ class SignUp extends Component {
     //    return  username === "" ? this.setState({errors:{username:"password is required"}}) : null
       //  this.errorCheck()
        
-        axios.post(`http://13.82.84.219/signup?password=${this.state.password}&username=${this.state.username}`,{headers:{'Content-Type':'Application/json'}}).then(res=>{
+        axios.post(`http://localhost:8081/signup?password=${this.state.password}&username=${this.state.username}`,{headers:{'Content-Type':'Application/json'}}).then(res=>{
             this.setState({errors:res.data})
             console.log(res)
         }).catch(error=>{

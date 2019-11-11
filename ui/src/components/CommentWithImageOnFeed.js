@@ -22,7 +22,7 @@ class CommentWithImageOnFeed extends Component {
         data.append("image",this.state.selectedFile)
         data.append("postid",this.props.id)
       
-        axios.post(`http://13.82.84.219/writecommentimage`,data,{headers: {
+        axios.post(`http://localhost:8081/writecommentimage`,data,{headers: {
             'Content-Type': 'multipart/form-data'
           }}).then(res=>{    
             console.log(res)

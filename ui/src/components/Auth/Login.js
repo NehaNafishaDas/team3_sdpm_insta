@@ -3,7 +3,7 @@ import axios from 'axios';
 
 
 import {Redirect} from 'react-router-dom'
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = false;
 
 class Login extends Component {
     constructor(props) {
@@ -14,8 +14,8 @@ class Login extends Component {
     onSubmit = (e)=>{
         e.preventDefault()
 
-        axios.post(`http://13.82.84.219/signin?password=${this.state.password}&username=${this.state.username}`,{
-            withCredentials: true}).then(res=>{
+        axios.post(`http://localhost:8081/signin?password=${this.state.password}&username=${this.state.username}`,{
+            withCredentials:true}).then(res=>{
             console.log(res)
             this.setState({success:res.data.status, error:res.data.error, ID :res.data.loggedInAs,username:res.data.username})
         }).catch(error=>{

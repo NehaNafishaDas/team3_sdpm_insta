@@ -19,7 +19,7 @@ class Home extends Component {
 
      
     getFollowersInfo=()=>{
-        axios.get('http://13.82.84.219/feed').then(res=>{ 
+        axios.get('http://localhost:8081/feed').then(res=>{ 
             this.setState({followersData:res.data})
             for(var i = 0;i<res.data.length; i++){
                 this.isLiked(res.data[i]._id)
@@ -32,7 +32,7 @@ class Home extends Component {
     
 
     checkLogin(){
-        axios.get('http://13.82.84.219/loginstatus').then(res=>{
+        axios.get('http://localhost:8081/loginstatus').then(res=>{
                 this.setState({username:res.data.username})
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")

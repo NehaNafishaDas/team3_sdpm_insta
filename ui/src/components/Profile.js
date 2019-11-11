@@ -26,7 +26,7 @@ class Profile extends Component {
         this.userPostDetails(id)
         this.setState({id:id})
 
-        axios.get(`http://13.82.84.219/isliked?postid=${id}&username=${this.state.username}`).then(res=>{
+        axios.get(`http://localhost:8081/isliked?postid=${id}&username=${this.state.username}`).then(res=>{
             this.setState({liked:res.data.liked})
         }).catch(error=>{
 
@@ -37,7 +37,7 @@ class Profile extends Component {
     }
 
     userPostDetails = (id)=>{
-		axios.get(`http://13.82.84.219/getpost?postid=${id}`).then(res=>{
+		axios.get(`http://localhost:8081/getpost?postid=${id}`).then(res=>{
             this.setState({userData:res.data})
 		}).catch(error=>{
 
@@ -68,7 +68,7 @@ class Profile extends Component {
     }
 
     checkLogin= ()=>{
-        axios.get('http://13.82.84.219/loginstatus').then(res=>{
+        axios.get('http://localhost:8081/loginstatus').then(res=>{
             this.setState({username:res.data.username})
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")
@@ -77,7 +77,7 @@ class Profile extends Component {
     }
 
     getAccountPicture = ()=>{
-        axios.get('http://13.82.84.219/accountposts').then(res=>{
+        axios.get('http://localhost:8081/accountposts').then(res=>{
             console.log(res)
             const Images = Object.values(res.data.posts)
             this.setState({Image:Images});
@@ -89,7 +89,7 @@ class Profile extends Component {
     }
 
     getComments = (id)=>{
-        axios.get(`http://13.82.84.219/getcommentsfrompost?postid=${id}`).then(res=>{
+        axios.get(`http://localhost:8081/getcommentsfrompost?postid=${id}`).then(res=>{
             const Comments= Object.values(res.data)
            this.setState({userCommentData:Comments})
         })
@@ -97,7 +97,7 @@ class Profile extends Component {
 
     onLikePost=(e)=>{
            e.target.classList.toggle('active');
-            axios.post(`http://13.82.84.219/liketoggle?postid=${this.state.id}`).then(res=>{
+            axios.post(`http://localhost:8081/liketoggle?postid=${this.state.id}`).then(res=>{
                 this.setState({liked:res.data.liked})
                 this.userPostDetails(this.state.id)
                 this.onClickViewPost(this.state.id)
@@ -124,7 +124,7 @@ class Profile extends Component {
        data.append("bio",this.state.bio)
       // data.append("email",this.state.email)
 
-       axios.put('http://13.82.84.219/updateprofile',data,{headers:{'Content-Type' :' multipart/data'}}).then(res=>{
+       axios.put('http://localhost:8081/updateprofile',data,{headers:{'Content-Type' :' multipart/data'}}).then(res=>{
         this.getAccountPicture()
             console.log(res)
        }).catch(error=>{
@@ -156,7 +156,7 @@ class Profile extends Component {
                       
                <ViewPicture images ={images} comment = {comments} likes = {likes} onClickViewPost = {this.onClickViewPost} keyy = {id}/>
             )
-            }) ): null
+         }) ): null
 
 
             const CommentList = userCommentData ? ( userCommentData.map(comment =>{  
@@ -165,14 +165,14 @@ class Profile extends Component {
                     
                     <li class="comment"><span class="username">{comment.username}</span> {comment.comment}</li>
                 )
-                }) ): null
+             }) ): null
 
-                const CommentImage = userCommentData ? ( userCommentData.map(comment =>{    
-                    if(comment.image)  
-                    return( 
-                        <li  class="comment" style = {{maxWidth:300}}> <span class="username">{comment.username}  </span><img src ={comment.image} style = {{maxWidth:300}}alt = "...."/></li>
-                    )
-                    }) ): null
+            const CommentImage = userCommentData ? ( userCommentData.map(comment =>{    
+                if(comment.image)  
+                return( 
+                    <li  class="comment" style = {{maxWidth:300}}> <span class="username">{comment.username}  </span><img src ={comment.image} style = {{maxWidth:300}}alt = "...."/></li>
+                )
+                }) ): null
     
 
 
@@ -229,7 +229,8 @@ class Profile extends Component {
                                 {UserLike}
                                 {datePosted}		
 							</div>
-							{caption}
+                            {caption}
+                            <p style ={ {paddingBottom:6}}>#philly #beards #international #philly #beards #international</p>
 							<ul class="post-comments">
                                 {CommentList}
                                 {CommentImage}

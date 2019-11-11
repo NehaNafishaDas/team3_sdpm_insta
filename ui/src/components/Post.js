@@ -15,7 +15,7 @@ class Post extends Component {
     }
 
     checkLogin= ()=>{
-        axios.get('http://13.82.84.219/loginstatus').then(res=>{
+        axios.get('http://localhost:8081/loginstatus').then(res=>{
             if(res.data.status === "notloggedin"){
                 console.log(res)
                 this.props.history.push("/login")
@@ -36,7 +36,7 @@ class Post extends Component {
         data.append("description",this.state.description)
         data.append("location",this.state.location)
 
-        axios.post(`http://13.82.84.219/imagepost`,data,{headers: {
+        axios.post(`http://localhost:8081/imagepost`,data,{headers: {
             'Content-Type': 'multipart/form-data'
           }}).then(res=>{    
             console.log(res)
@@ -60,7 +60,7 @@ class Post extends Component {
 
     getProfile = ()=>{
         const { username} = this.props
-        axios.get(`http://13.82.84.219/getuser?userid=${username}`).then(res=>{
+        axios.get(`http://localhost:8081/getuser?userid=${username}`).then(res=>{
             this.setState({profilepicture:res.data.profilepicture})
         })
 
@@ -98,9 +98,11 @@ class Post extends Component {
                     <h2 class="username">{this.props.username}</h2>
                 </div>
                 <label for="name">Caption</label>
-                <input type="text" name="description" class="name text-field" placeholder="muiz" onChange = {this.onChange} />
+                <input type="text" name="description" class="name text-field" placeholder="enter your caption ..." onChange = {this.onChange} />
                 <label for="username">Photo</label>
                 <input type="file" class="name text-field" name = "images" id="files" onChange = {this.onUpload}/>
+                <label for="name">Tags</label>
+                <input type="text" name="tags" class="name text-field" placeholder="tag names ..." onChange = {this.onChange} />
                 <select name = "location" onChange = {this.onChange}  class="name text-field">
                     <option selected>Select Your Location</option>
                    {state}

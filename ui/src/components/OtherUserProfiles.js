@@ -21,7 +21,7 @@ class OtherUserProfiles extends Component {
     getAccountProfile = ()=>{
         const { username} = this.props.location.state
       //  if(username = "")
-        axios.get(`http://13.82.84.219/getuser?userid=${username}`).then(res=>{
+        axios.get(`http://localhost:8081/getuser?userid=${username}`).then(res=>{
            
             const Images = Object.values(res.data.posts)
             this.setState({Image:Images});
@@ -34,7 +34,7 @@ class OtherUserProfiles extends Component {
         this.userPostDetails(id)
         this.setState({id:id})
        // const { username} = this.props.location.state
-        axios.get(`http://13.82.84.219/isliked?postid=${id}&username=${this.state.loggedInUsername}`).then(res=>{
+        axios.get(`http://localhost:8081/isliked?postid=${id}&username=${this.state.loggedInUsername}`).then(res=>{
             this.setState({liked:res.data.liked})
         }).catch(error=>{
 
@@ -45,7 +45,7 @@ class OtherUserProfiles extends Component {
     }
 
     userPostDetails = (id)=>{
-		axios.get(`http://13.82.84.219/getpost?postid=${id}`).then(res=>{
+		axios.get(`http://localhost:8081/getpost?postid=${id}`).then(res=>{
             this.setState({userData:res.data})
 		}).catch(error=>{
 
@@ -72,7 +72,7 @@ class OtherUserProfiles extends Component {
     }
 
     getComments = (id)=>{
-        axios.get(`http://13.82.84.219/getcommentsfrompost?postid=${id}`).then(res=>{
+        axios.get(`http://localhost:8081/getcommentsfrompost?postid=${id}`).then(res=>{
             const Comments= Object.values(res.data)
            this.setState({userCommentData:Comments})
         })
@@ -80,7 +80,7 @@ class OtherUserProfiles extends Component {
 
     onLikePost=(e)=>{
            e.target.classList.toggle('active');
-          axios.post(`http://13.82.84.219/liketoggle?postid=${this.state.id}`).then(res=>{
+          axios.post(`http://localhost:8081/liketoggle?postid=${this.state.id}`).then(res=>{
                 this.setState({liked:res.data.liked})
                 this.userPostDetails(this.state.id)
                 this.onClickViewPost(this.state.id)
@@ -92,7 +92,7 @@ class OtherUserProfiles extends Component {
     }
 
     checkLogin= ()=>{
-        axios.get('http://13.82.84.219/loginstatus').then(res=>{
+        axios.get('http://localhost:8081/loginstatus').then(res=>{
             this.setState({loggedInUsername:res.data.username})
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")
@@ -106,7 +106,7 @@ class OtherUserProfiles extends Component {
        // e.target.innerHTML  = "following" ?  e.target.innerHTML  = "follow" : e.target.innerHTML  = "following"
        
         const { username} = this.props.location.state
-        axios.post(`http://13.82.84.219/followtoggle?targetaccount=${username}`).then(res=>{
+        axios.post(`http://localhost:8081/followtoggle?targetaccount=${username}`).then(res=>{
             console.log(res)
             this.isFollowing()
             this.getAccountProfile()
@@ -117,7 +117,7 @@ class OtherUserProfiles extends Component {
 
     isFollowing=()=>{
         const { username} = this.props.location.state
-        axios.get(`http://13.82.84.219/isfollowing?targetaccount=${username}`).then(res=>{
+        axios.get(`http://localhost:8081/isfollowing?targetaccount=${username}`).then(res=>{
             this.setState({isfollowing:res.data.isfollowing})
         }).catch(error=>{
 

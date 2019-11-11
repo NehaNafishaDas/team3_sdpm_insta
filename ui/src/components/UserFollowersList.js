@@ -20,7 +20,7 @@ class UserFollowersList extends Component {
 
     onLikePost=(e)=>{
         e.target.classList.toggle('active');
-        axios.post(`http://13.82.84.219/liketoggle?postid=${this.props.follower._id}`).then(res=>{
+        axios.post(`http://localhost:8081/liketoggle?postid=${this.props.follower._id}`).then(res=>{
                 this.props.getFollowersInfo()
         }).catch(error=>{
         }) 
@@ -28,7 +28,7 @@ class UserFollowersList extends Component {
    
        
     isLiked=(id)=>{
-        axios.get(`http://13.82.84.219/isliked?postid=${this.props.follower._id}&username=${this.props.username}`).then(res=>{
+        axios.get(`http://localhost:8081/isliked?postid=${this.props.follower._id}&username=${this.props.username}`).then(res=>{
             this.setState({liked:res.data.liked})
         }).catch(error=>{
 
@@ -58,7 +58,9 @@ class UserFollowersList extends Component {
             <div class="post-image"style={{backgroundImage : "url('" +this.props.follower.imageId+ "')",backgroundSize : "cover",backgroundPosition : 'center'}} ></div>
             <h4 class="post-likes">{this.props.follower.likes} likes</h4>
             <p class="post-caption"><span class="username">{this.props.follower.username} </span> {this.props.follower.description}</p>
-            <ul class="post-comments" style ={{maxHeight: 200, overflow: 'auto'}}>
+            <p style ={ {paddingBottom:6,marginLeft: 25}}>#philly #beards #international #philly #beards #international</p>
+            <p style = {{marginLeft: 25, fontSize:15,color:'grey'}}>view all comments</p>
+            <ul class="post-comments" style ={{maxHeight: 50, overflow: 'auto'}}>
                <ViewComments  comments = {this.props.follower.comments}/>
             </ul>
             <div class="post-actions clearfix">
