@@ -73,6 +73,7 @@ public class ImageController {
     @PostMapping(value = "/imagepost", produces = "application/json")
     public @ResponseBody String imagePost(@RequestParam("images") MultipartFile images,
                                             @RequestParam(required = false) String description,
+                                            @RequestParam(required = false) String location,
                                             HttpSession session) throws IOException {
         String username = (String) session.getAttribute("username");
         if(username == null) {
@@ -86,6 +87,7 @@ public class ImageController {
         ArrayList<String> imageList = new ArrayList<>();
         imageList.add((String)uploadResult.get("url"));
         Post p = new Post(imageList, a._id, a.getUsername(), description);
+        if(location != null) p.setLocation(location);
         db.insertPost(p);
         ObjectNode response = om.createObjectNode();
         response.put("status", "success");
@@ -215,10 +217,11 @@ public class ImageController {
 
     @PostMapping(value = "/writecomment", produces = "application/json")
     public @ResponseBody String writeComment(@RequestParam String postid,
-                                             @RequestParam String comment,
-                                             @RequestBody(required = false) MultipartFile image,
+                                             @RequestParam(required = false) String comment,
+                                             @RequestParam(required = false) MultipartFile image,
                                              HttpSession session) throws IOException {
         String username = (String) session.getAttribute("username");
+        System.out.println("WRITE COMMENT RECIEVED");
         if(username == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
         }
@@ -237,8 +240,10 @@ public class ImageController {
             if(image != null) {
                 Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
                 String imageUrl = (String) uploadResult.get("url");
+                if(comment == null) comment = "";
                 db.writeComment(a, p, comment, imageUrl);
             } else {
+                if(comment == null) comment = "";
                 db.writeComment(a, p, comment);
             }
             ObjectMapper om = new ObjectMapper();
@@ -247,6 +252,40 @@ public class ImageController {
             return om.writeValueAsString(response);
         }
     }
+
+    @PostMapping(value = "/writecommentimage", produces = "application/json")
+    public @ResponseBody String writeCommentImage(@RequestParam String postid,
+                                             @RequestParam MultipartFile image,
+                                             HttpSession session) throws IOException {
+        String username = (String) session.getAttribute("username");
+        System.out.println("IMAGE COMMENT RECIEVED");
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Post p;
+        Account a;
+        try {
+            p = db.getPost(new ObjectId(postid));
+            a = db.getAccount(username);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid post or account");
+        }
+
+        if(p == null || a == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid request");
+        } else {
+            Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
+            String imageUrl = (String) uploadResult.get("url");
+            db.writeComment(a, p, "", imageUrl);
+            ObjectMapper om = new ObjectMapper();
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "success");
+            return om.writeValueAsString(response);
+        }
+    }
+
+
+
 
     @GetMapping(value = "/getcommentsfrompost", produces = "application/json")
     public @ResponseBody ArrayList<Comment> getCommentsFromPost(@RequestParam String postid) {
@@ -263,6 +302,8 @@ public class ImageController {
             return p.getComments();
         }
     }
+
+
 
     @GetMapping(value = "/getpost", produces = "application/json")
     public @ResponseBody String getPost(@RequestParam String postid)
@@ -282,6 +323,7 @@ public class ImageController {
             response.putPOJO("images", p.getImageId());
             response.put("accountid", p.getAccount().toHexString());
             response.put("description", p.getDescription());
+            response.put("location", p.getLocation());
             response.put("likes", p.getLikes());
             response.putPOJO("tags", p.getTags());
             response.put("date", p.getDate().toString());

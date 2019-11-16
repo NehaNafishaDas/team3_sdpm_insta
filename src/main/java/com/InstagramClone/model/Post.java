@@ -1,6 +1,5 @@
 package com.InstagramClone.model;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -16,6 +15,7 @@ public class Post implements Comparable<Post> {
 	public ObjectId account;
 	public String username;
 	public String description;
+	public String location;
 	public int likes;
 	public ArrayList<String> tags;
 	@JsonSerialize(using = ToStringSerializer.class)
@@ -77,6 +77,14 @@ public class Post implements Comparable<Post> {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
 	}
 
 	public int getLikes() {

@@ -26,6 +26,8 @@ public class Account {
 	public ArrayList<ObjectId> followedBy;
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ArrayList<ObjectId> likedPosts;
+	@JsonSerialize(using = ToStringSerializer.class)
+	public ArrayList<ObjectId> albums;
     
     public Account(String username, String password) {
     	this._id = new ObjectId();
@@ -40,6 +42,7 @@ public class Account {
     	this.followedUsers = new ArrayList<>();
     	this.followedBy = new ArrayList<>();
     	this.likedPosts = new ArrayList<>();
+    	this.albums = new ArrayList<>();
     	this.postCount = 0;
     }
     
@@ -109,13 +112,29 @@ public class Account {
 		this.lastName = lastName;
 	}
 
+	public int getPostCount() {
+		return postCount;
+	}
+
+	public void setPostCount(int postCount) {
+		this.postCount = postCount;
+	}
+
+	public ArrayList<ObjectId> getPosts() {
+		return posts;
+	}
+
+	public void setPosts(ArrayList<ObjectId> posts) {
+		this.posts = posts;
+	}
+
 	public ArrayList<ObjectId> getFollowedUsers() {
-    	return followedUsers;
-    }
+		return followedUsers;
+	}
 
 	public void setFollowedUsers(ArrayList<ObjectId> followedUsers) {
-    	this.followedUsers = followedUsers;
-    }
+		this.followedUsers = followedUsers;
+	}
 
 	public ArrayList<ObjectId> getFollowedBy() {
 		return followedBy;
@@ -133,19 +152,11 @@ public class Account {
 		this.likedPosts = likedPosts;
 	}
 
-	public ArrayList<ObjectId> getPosts() {
-		return posts;
+	public ArrayList<ObjectId> getAlbums() {
+		return albums;
 	}
 
-	public void setPosts(ArrayList<ObjectId> posts) {
-		this.posts = posts;
-	}
-
-	public int getPostCount() {
-		return postCount;
-	}
-
-	public void setPostCount(int postCount) {
-		this.postCount = postCount;
+	public void setAlbums(ArrayList<ObjectId> albums) {
+		this.albums = albums;
 	}
 }

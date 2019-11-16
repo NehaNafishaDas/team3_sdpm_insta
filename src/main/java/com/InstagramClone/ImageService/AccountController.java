@@ -9,6 +9,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import com.InstagramClone.model.Album;
 import com.InstagramClone.model.Post;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -511,6 +512,146 @@ public class AccountController {
         Collections.sort(allPosts, Collections.reverseOrder());
         return allPosts;
     }
+
+    @PostMapping(value = "/createalbum", produces = "application/json")
+    public @ResponseBody
+    String createAlbum(@RequestParam String name,
+                    HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("username");
+        ObjectNode response = om.createObjectNode();
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        ArrayList<String> imageList = new ArrayList<>();
+        Account a = db.getAccount(loggedInAs);
+
+        if(a != null) {
+            Album newAlbum = db.createAlbum(a._id, name);
+            response.put("_id", newAlbum._id.toHexString());
+            return om.writeValueAsString(response);
+        } else {
+            response.put("error", "invalid account");
+            return om.writeValueAsString(response);
+        }
+    }
+
+    @GetMapping(value = "/getalbum", produces = "application/json")
+    public @ResponseBody
+    Album getAlbum(@RequestParam String name, HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account account = db.getAccount(loggedInAs);
+        for (ObjectId album : account.getAlbums()) {
+            Album currentAlbum = db.getAlbum(album);
+            if(currentAlbum.getName().equals(name)) {
+                return currentAlbum;
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "could not find album");
+    }
+
+    @GetMapping(value = "/getallalbums", produces = "application/json")
+    public @ResponseBody
+    String getAllAlbums(HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account account = db.getAccount(loggedInAs);
+        ObjectNode response = om.createObjectNode();
+        int count = 0;
+        for (ObjectId album : account.getAlbums()) {
+            ObjectNode node = response.putObject(String.valueOf(count));
+            Album currentAlbum = db.getAlbum(album);
+            if(currentAlbum != null) {
+                node.put("name", currentAlbum.getName());
+                node.put("id", currentAlbum.get_id().toHexString());
+                count++;
+            }
+        }
+        return om.writeValueAsString(response);
+    }
+
+    @GetMapping(value = "/getfollowers", produces = "application/json")
+    public @ResponseBody String getFollowers(HttpSession session) throws JsonProcessingException {
+        String username = (String) session.getAttribute("username");
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+
+        Account a = db.getAccount(username);
+        ObjectNode response = om.createObjectNode();
+        int count = 0;
+        for (ObjectId followedUser : a.getFollowedUsers()) {
+            Account follower = db.getAccount(followedUser);
+            if(follower != null) {
+                response.put(String.valueOf(count), follower.getUsername());
+                count++;
+            }
+        }
+        return om.writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/addusertoalbum", produces = "application/json")
+    public @ResponseBody
+    String addUserToAlbum(@RequestParam String username,
+                          @RequestParam String album,
+                          HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account account = db.getAccount(username);
+        ObjectNode response = om.createObjectNode();
+        for (ObjectId albumId : account.getAlbums()) {
+            Album currentAlbum = db.getAlbum(albumId);
+            if(currentAlbum.getName().equals(album)) {
+                db.addUserToAlbum(currentAlbum.get_id(), username);
+                response.put("status", "success");
+                return om.writeValueAsString(response);
+
+            }
+        }
+        response.put("status", "failed");
+        return om.writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/addimagetoalbum", produces = "application/json")
+    public @ResponseBody
+    String addImageToAlbum(@RequestParam MultipartFile image,
+                           @RequestParam String album,
+                           HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account account = db.getAccount(loggedInAs);
+        ObjectNode response = om.createObjectNode();
+        Iterator<ObjectId> itr = account.getAlbums().iterator();
+        while (itr.hasNext()) {
+            ObjectId albumId = itr.next();
+            Album currentAlbum = db.getAlbum(albumId);
+            if(currentAlbum.getName().equals(album)) {
+                Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
+                db.addImageToAlbum(currentAlbum.get_id(), (String)uploadResult.get("url"));
+                response.put("status", "success");
+                response.put("url", (String)uploadResult.get("url"));
+                return om.writeValueAsString(response);
+
+            }
+        }
+        response.put("status", "failed");
+        return om.writeValueAsString(response);
+    }
+
+//    @PostMapping(value = "/removeUserFromAlbum", produces = "application/json")
+//    public @ResponseBody
+//    String removeUserFromAlbum(@RequestParam String name,
+//                          HttpSession session) throws JsonProcessingException {
+//
+//    }
 
     // returns the 9 highest liked public posts
     @GetMapping(value = "/popularposts", produces = "application/json")

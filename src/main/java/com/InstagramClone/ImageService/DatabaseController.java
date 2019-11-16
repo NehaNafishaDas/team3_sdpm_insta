@@ -13,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import com.InstagramClone.model.Comment;
+import com.InstagramClone.model.*;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
@@ -24,9 +24,6 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import com.InstagramClone.model.Account;
-import com.InstagramClone.model.Image;
-import com.InstagramClone.model.Post;
 import com.mongodb.ConnectionString;
 
 
@@ -38,6 +35,7 @@ public class DatabaseController {
 	private MongoCollection<Image> imageDb;
 	private MongoCollection<Post> postDb;
 	private MongoCollection<Account> accountDb;
+	private MongoCollection<Album> albumDb;
 
 	private DatabaseController () {
 		Properties prop = new Properties();
@@ -56,20 +54,15 @@ public class DatabaseController {
 		
 	    mongoClient = MongoClients.create(new ConnectionString
 	    		("mongodb+srv://"+username+":"+password+"@cluster0-lhmsj.mongodb.net/test?retryWrites=true&w=majority"));
-		CodecProvider pojoCodecProvider = PojoCodecProvider.builder().register("com.InstagramClone.model").build();
-		CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
-
-	    database = mongoClient.getDatabase("db");
+		CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(),
+				fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+		database = mongoClient.getDatabase("db");
 	    database = database.withCodecRegistry(pojoCodecRegistry);
 	    imageDb = database.getCollection("Images", Image.class);
 	    postDb = database.getCollection("Posts", Post.class);
 	    accountDb = database.getCollection("Accounts", Account.class);
+		albumDb = database.getCollection("Albums", Album.class);
 	}
-	
-	// Insert an image object into the database given an image object
-//	public void insertImage(Image image) {
-//	    imageDb.insertOne(image);
-//	}
 	
 	// Return image object given an objectid as a string
 	public Image getImage(String id) {
@@ -200,6 +193,44 @@ public class DatabaseController {
 			response.add(iterator.next());
 		}
 		return response;
+	}
+
+	public Album createAlbum(ObjectId accId, String name) {
+		Account account = getAccount(accId);
+		Album album = new Album(account._id, account.getUsername(), name);
+		accountDb.updateOne(eq("_id", account._id), Updates.addToSet("albums", album._id));
+		albumDb.insertOne(album);
+		return album;
+	}
+
+	public Album getAlbum(ObjectId id) {
+		return albumDb.find(eq("_id", id)).first();
+	}
+
+	public void addUserToAlbum(ObjectId albumId, String username) {
+		Album album = getAlbum(albumId);
+		if(album == null) return;
+		Account account = getAccount(username);
+		accountDb.updateOne(eq("_id", account._id), Updates.addToSet("album", album._id));
+		albumDb.updateOne(eq("_id", albumId), Updates.addToSet("group", account._id));
+	}
+
+	public void addImageToAlbum(ObjectId albumId, String imageUrl) {
+		Album album = getAlbum(albumId);
+		if(album == null) return;
+		albumDb.updateOne(eq("_id", albumId), Updates.addToSet("images", imageUrl));
+	}
+
+	public ArrayList<ObjectId> getAllAlbums(ObjectId accId) {
+		Account account = getAccount(accId);
+		ArrayList<ObjectId> response = account.getAlbums();
+		return response;
+	}
+
+	public void removeUserFromAlbum(String username, ObjectId albumId) {
+		Account account = getAccount(username);
+		accountDb.updateOne(eq("_id", account._id), Updates.pull("album", albumId));
+		albumDb.updateOne(eq("_id", albumId), Updates.pull("group", account._id));
 	}
 
 	// Returns a list of posts based on a bson query
