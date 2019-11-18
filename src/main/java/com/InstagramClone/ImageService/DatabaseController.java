@@ -153,7 +153,18 @@ public class DatabaseController {
 	public Post getPost(ObjectId id){
 		return postDb.find(eq("_id", id)).first();
 	}
-	
+
+	public ArrayList<Post> getPost(String description){
+		String similarDesc = "/.*"+description+".*/";
+		FindIterable<Post> posts = postDb.find(eq("description",similarDesc));
+		MongoCursor<Post> iterator = posts.iterator();
+		ArrayList<Post> response = new ArrayList<Post>();
+		while(iterator.hasNext()) {
+			response.add(iterator.next());
+		}
+		return response;
+	}
+
 	public Privacy getPrivacy(String userId) throws NoSuchAlgorithmException {
 		return privacyDb.find(eq("userId", userId)).first();
 	}

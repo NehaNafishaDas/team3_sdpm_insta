@@ -597,10 +597,26 @@ public class AccountController {
         Account currentUser = db.getAccount((String) session.getAttribute("username"));
         String currentUserId = currentUser.get_id();
         Privacy privacy = db.getPrivacy(targetUserId);
-        BlockedUser blockedUser = db.getBlockList(targetUserId);
-        List<String> blockedList=blockedUser.getBlockedUsers();
         if(!(privacy.isPrivate)){
             getUser(targetUser,session);
         }
+    }
+
+    @GetMapping(value = "/searchImageDesc", produces = "application/json")
+    public String searchImageDesc(@RequestParam String description, HttpSession session) throws NoSuchAlgorithmException, IOException {
+       ArrayList<Post> post = db.getPost(description);
+       ArrayList<Post> allPost = new ArrayList<>();
+       ObjectNode response = om.createObjectNode();
+       Privacy privacy;
+       BlockedUser blockedUser;
+       for(Post p : post) {
+           privacy = db.getPrivacy(p.getUsername());
+           blockedUser = db.getBlockList(p.getUsername());
+           List<String> blockedList=blockedUser.getBlockedUsers();
+           if (!(privacy.isPrivate) && !(blockedList.contains(session.getAttribute("username"))))
+               allPost.add(p);
+       }
+       response.putPOJO("posts", allPost);
+       return om.writeValueAsString(response);
     }
 }
