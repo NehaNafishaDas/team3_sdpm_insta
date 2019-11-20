@@ -2,27 +2,32 @@ package com.InstagramClone.ImageService;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.HttpSession;
 
-import com.InstagramClone.model.Album;
-import com.InstagramClone.model.Post;
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.InstagramClone.model.Account;
+import com.InstagramClone.model.BlockedUser;
+import com.InstagramClone.model.Post;
+import com.InstagramClone.model.Privacy;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class AccountController {
@@ -58,6 +63,10 @@ public class AccountController {
             return om.writeValueAsString(response);
         } else {
             String id = db.createAccount(account);
+            Privacy privacy = new Privacy(id,false);
+            db.createPrivacy(privacy);
+            BlockedUser blockedUsers = new BlockedUser(id,null);
+            db.createBlockList(blockedUsers);
             response.put("status", "success");
             response.put("username", username);
             response.put("_id", id);
@@ -124,15 +133,51 @@ public class AccountController {
     // TODO
     @PostMapping(value = "/blockuser/{account:.+}", produces = "application/json")
     public @ResponseBody
-    String blockUser(@PathVariable String account) {
-        return null;
+    String blockUser(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+        String currentUser = (String) session.getAttribute("username");
+        Account currentAccount = db.getAccount(currentUser);
+        String currentUserId = currentAccount.get_id();
+        db.addToBlockedList(currentUserId, account);
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "User has been blocked.");
+        return om.writeValueAsString(response);
+    }
+    
+    @PostMapping(value = "/setPrivate/{account:.+}", produces = "application/json")
+    public @ResponseBody
+    String setPrivate(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+        String currentUser = (String) session.getAttribute("username");
+        Account currentAccount = db.getAccount(currentUser);
+        String currentUserId = currentAccount.get_id();
+        db.changePrivacy(currentUserId, true);
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "User has set to private.");
+        return om.writeValueAsString(response);
     }
 
     // TODO
     @PostMapping(value = "/unblockuser/{account:.+}", produces = "application/json")
     public @ResponseBody
-    String unblockUser(@PathVariable String account) {
-        return null;
+    String unblockUser(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+        String currentUser = (String) session.getAttribute("username");
+        Account currentAccount = db.getAccount(currentUser);
+        String currentUserId = currentAccount.get_id();
+        db.removeFromBlockedList(currentUserId, account);
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "User has been unblocked.");
+        return om.writeValueAsString(response);
+    }
+    
+    @PostMapping(value = "/unsetPrivate/{account:.+}", produces = "application/json")
+    public @ResponseBody
+    String unsetPrivate(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+        String currentUser = (String) session.getAttribute("username");
+        Account currentAccount = db.getAccount(currentUser);
+        String currentUserId = currentAccount.get_id();
+        db.changePrivacy(currentUserId, false);
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "User has set to public.");
+        return om.writeValueAsString(response);
     }
 
     @PostMapping(value = "/changepassword", produces = "application/json")
@@ -693,5 +738,34 @@ public class AccountController {
     @GetMapping(value = "/popularposts", produces = "application/json")
     public @ResponseBody ArrayList<Post> popularPosts() {
         return db.getPopularPosts();
+
+    @GetMapping(value = "/searchUsername", produces = "application/json")
+    public void searchUser(@RequestParam String targetUser, HttpSession session) throws NoSuchAlgorithmException, IOException {
+        Account targetUserDetails = db.getAccount(targetUser);
+        String targetUserId = targetUserDetails.get_id();
+        Account currentUser = db.getAccount((String) session.getAttribute("username"));
+        String currentUserId = currentUser.get_id();
+        Privacy privacy = db.getPrivacy(targetUserId);
+        if(!(privacy.isPrivate)){
+            getUser(targetUser,session);
+        }
+    }
+
+    @GetMapping(value = "/searchImageDesc", produces = "application/json")
+    public String searchImageDesc(@RequestParam String description, HttpSession session) throws NoSuchAlgorithmException, IOException {
+       ArrayList<Post> post = db.getPost(description);
+       ArrayList<Post> allPost = new ArrayList<>();
+       ObjectNode response = om.createObjectNode();
+       Privacy privacy;
+       BlockedUser blockedUser;
+       for(Post p : post) {
+           privacy = db.getPrivacy(p.getUsername());
+           blockedUser = db.getBlockList(p.getUsername());
+           List<String> blockedList=blockedUser.getBlockedUsers();
+           if (!(privacy.isPrivate) && !(blockedList.contains(session.getAttribute("username"))))
+               allPost.add(p);
+       }
+       response.putPOJO("posts", allPost);
+       return om.writeValueAsString(response);
     }
 }

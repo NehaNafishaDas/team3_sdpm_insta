@@ -36,6 +36,8 @@ public class DatabaseController {
 	private MongoCollection<Post> postDb;
 	private MongoCollection<Account> accountDb;
 	private MongoCollection<Album> albumDb;
+	private MongoCollection<Privacy> privacyDb;
+	private MongoCollection<BlockedUser> blockedUserDb;
 
 	private DatabaseController () {
 		Properties prop = new Properties();
@@ -62,7 +64,14 @@ public class DatabaseController {
 	    postDb = database.getCollection("Posts", Post.class);
 	    accountDb = database.getCollection("Accounts", Account.class);
 		albumDb = database.getCollection("Albums", Album.class);
+	    privacyDb = database.getCollection("Privacy", Privacy.class);
+	    blockedUserDb = database.getCollection("BlockedUser", BlockedUser.class);
 	}
+	
+	// Insert an image object into the database given an image object
+//	public void insertImage(Image image) {
+//	    imageDb.insertOne(image);
+//	}
 	
 	// Return image object given an objectid as a string
 	public Image getImage(String id) {
@@ -81,6 +90,15 @@ public class DatabaseController {
 		account.setPassword(sb.toString());
 		accountDb.insertOne(account);
 		return account.get_id();
+	}
+	
+	//Create a privacy flag table with same id as the account._id and a flag
+	public void createPrivacy(Privacy privacy) throws NoSuchAlgorithmException {
+		privacyDb.insertOne(privacy);
+	}
+	
+	public void createBlockList(BlockedUser blockedUsers) throws NoSuchAlgorithmException {
+		blockedUserDb.insertOne(blockedUsers);
 	}
 	
 	public Account checkAccount(String username, String password) throws NoSuchAlgorithmException {
@@ -130,6 +148,25 @@ public class DatabaseController {
 
 	public Post getPost(ObjectId id){
 		return postDb.find(eq("_id", id)).first();
+	}
+
+	public ArrayList<Post> getPost(String description){
+		String similarDesc = "/.*"+description+".*/";
+		FindIterable<Post> posts = postDb.find(eq("description",similarDesc));
+		MongoCursor<Post> iterator = posts.iterator();
+		ArrayList<Post> response = new ArrayList<Post>();
+		while(iterator.hasNext()) {
+			response.add(iterator.next());
+		}
+		return response;
+	}
+
+	public Privacy getPrivacy(String userId) throws NoSuchAlgorithmException {
+		return privacyDb.find(eq("userId", userId)).first();
+	}
+	
+	public BlockedUser getBlockList(String currentUser) throws NoSuchAlgorithmException {
+		return blockedUserDb.find(eq("currentUser", currentUser)).first();
 	}
 
 	public void setProfilePicture(ObjectId targetAccount, String url) {
@@ -245,6 +282,18 @@ public class DatabaseController {
   
         return single_instance; 
     }
+    
+    public void changePrivacy(String currentUserId, boolean isPrivate) {
+    	privacyDb.updateOne(eq("userId", currentUserId), Updates.set("isPrivate", isPrivate));
+	}
+  
+    public void addToBlockedList(String currentUser, String targetUser) {
+    	blockedUserDb.updateOne(eq("userId", currentUser), Updates.addToSet("blockedUsers", targetUser));
+	}
+    
+    public void removeFromBlockedList(String currentUser, String targetUser) {
+    	blockedUserDb.updateOne(eq("userId", currentUser), Updates.pull("blockedUsers", targetUser));
+	}
 
 
 }

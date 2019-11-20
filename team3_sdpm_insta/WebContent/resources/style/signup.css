@@ -1,0 +1,33 @@
+body {
+	display: inline-block; /* Hidden by default */
+	overflow: auto; /* Enable scroll if needed */
+	background-color: rgba(0,0,0,0.2); /* Black w/ opacity */
+	padding-left: 45%;
+	padding-top: 15%;
+}
+input{
+  padding: 4px;
+  border: none;
+  border-radius: 5px;
+  width: auto;
+  margin: 5px 0;
+  opacity: 0.85;
+  display: inline-block;
+  font-size: 17px;
+  text-decoration: none;
+}
+button{
+	padding: 4px;
+  border: none;
+  border-radius: 5px;
+  width: 48.5%;
+  margin: 5px 0;
+  opacity: 0.85;
+  display: inline-block;
+  font-size: 17px;
+  text-decoration: none;
+}
+label{
+	font-size: 17px;
+	color: black;
+}
