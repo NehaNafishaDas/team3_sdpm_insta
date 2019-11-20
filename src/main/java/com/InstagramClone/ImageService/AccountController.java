@@ -545,6 +545,7 @@ public class AccountController {
         Account account = db.getAccount(loggedInAs);
         for (ObjectId album : account.getAlbums()) {
             Album currentAlbum = db.getAlbum(album);
+            if(currentAlbum == null) continue;
             if(currentAlbum.getName().equals(name)) {
                 return currentAlbum;
             }
@@ -603,13 +604,21 @@ public class AccountController {
         if (loggedInAs == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
         }
-        Account account = db.getAccount(username);
+        Account account = db.getAccount(loggedInAs);
+        Account target = db.getAccount(username);
         ObjectNode response = om.createObjectNode();
         for (ObjectId albumId : account.getAlbums()) {
             Album currentAlbum = db.getAlbum(albumId);
+            if(currentAlbum == null) continue;
             if(currentAlbum.getName().equals(album)) {
+                if(currentAlbum.getGroup().contains(target._id)) {
+                    response.put("status", "failed");
+                    response.put("error", "user already in album group");
+                    return om.writeValueAsString(response);
+                }
                 db.addUserToAlbum(currentAlbum.get_id(), username);
                 response.put("status", "success");
+                response.put("error", "user successfully added to album");
                 return om.writeValueAsString(response);
 
             }
@@ -633,6 +642,7 @@ public class AccountController {
         while (itr.hasNext()) {
             ObjectId albumId = itr.next();
             Album currentAlbum = db.getAlbum(albumId);
+            if(currentAlbum == null) continue;
             if(currentAlbum.getName().equals(album)) {
                 Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
                 db.addImageToAlbum(currentAlbum.get_id(), (String)uploadResult.get("url"));
@@ -646,12 +656,38 @@ public class AccountController {
         return om.writeValueAsString(response);
     }
 
-//    @PostMapping(value = "/removeUserFromAlbum", produces = "application/json")
-//    public @ResponseBody
-//    String removeUserFromAlbum(@RequestParam String name,
-//                          HttpSession session) throws JsonProcessingException {
-//
-//    }
+    @PostMapping(value = "/removeUserFromAlbum", produces = "application/json")
+    public @ResponseBody
+    String removeUserFromAlbum(@RequestParam String username,
+                               @RequestParam String album,
+                               HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account account = db.getAccount(loggedInAs);
+        Account target = db.getAccount(username);
+        ObjectNode response = om.createObjectNode();
+        for (ObjectId albumId : account.getAlbums()) {
+            Album currentAlbum = db.getAlbum(albumId);
+            if(currentAlbum == null) continue;
+            if(currentAlbum.getName().equals(album)) {
+                if(currentAlbum.getGroup().contains(target._id)) {
+
+                    response.put("status", "failed");
+                    response.put("error", "user already in album group");
+                    return om.writeValueAsString(response);
+                }
+                db.addUserToAlbum(currentAlbum.get_id(), username);
+                response.put("status", "success");
+                response.put("error", "user successfully added to album");
+                return om.writeValueAsString(response);
+
+            }
+        }
+        response.put("status", "failed");
+        return om.writeValueAsString(response);
+    }
 
     // returns the 9 highest liked public posts
     @GetMapping(value = "/popularposts", produces = "application/json")

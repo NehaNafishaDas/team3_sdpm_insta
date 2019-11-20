@@ -211,7 +211,7 @@ public class DatabaseController {
 		Album album = getAlbum(albumId);
 		if(album == null) return;
 		Account account = getAccount(username);
-		accountDb.updateOne(eq("_id", account._id), Updates.addToSet("album", album._id));
+		accountDb.updateOne(eq("_id", account._id), Updates.addToSet("albums", album._id));
 		albumDb.updateOne(eq("_id", albumId), Updates.addToSet("group", account._id));
 	}
 
@@ -229,7 +229,7 @@ public class DatabaseController {
 
 	public void removeUserFromAlbum(String username, ObjectId albumId) {
 		Account account = getAccount(username);
-		accountDb.updateOne(eq("_id", account._id), Updates.pull("album", albumId));
+		accountDb.updateOne(eq("_id", account._id), Updates.pull("albums", albumId));
 		albumDb.updateOne(eq("_id", albumId), Updates.pull("group", account._id));
 	}
 
