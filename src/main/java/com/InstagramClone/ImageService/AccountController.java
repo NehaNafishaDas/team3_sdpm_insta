@@ -6,6 +6,7 @@ import java.util.*;
 
 import javax.servlet.http.HttpSession;
 
+import com.InstagramClone.model.*;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,10 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.InstagramClone.model.Account;
-import com.InstagramClone.model.BlockedUser;
-import com.InstagramClone.model.Post;
-import com.InstagramClone.model.Privacy;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -718,16 +715,15 @@ public class AccountController {
             if(currentAlbum == null) continue;
             if(currentAlbum.getName().equals(album)) {
                 if(currentAlbum.getGroup().contains(target._id)) {
-
+                    db.removeUserFromAlbum(username, currentAlbum.get_id());
+                    response.put("status", "success");
+                    response.put("error", "user successfully added to album");
+                    return om.writeValueAsString(response);
+                } else {
                     response.put("status", "failed");
-                    response.put("error", "user already in album group");
+                    response.put("error", "user not in album group");
                     return om.writeValueAsString(response);
                 }
-                db.addUserToAlbum(currentAlbum.get_id(), username);
-                response.put("status", "success");
-                response.put("error", "user successfully added to album");
-                return om.writeValueAsString(response);
-
             }
         }
         response.put("status", "failed");
@@ -738,18 +734,19 @@ public class AccountController {
     @GetMapping(value = "/popularposts", produces = "application/json")
     public @ResponseBody ArrayList<Post> popularPosts() {
         return db.getPopularPosts();
-
-    @GetMapping(value = "/searchUsername", produces = "application/json")
-    public void searchUser(@RequestParam String targetUser, HttpSession session) throws NoSuchAlgorithmException, IOException {
-        Account targetUserDetails = db.getAccount(targetUser);
-        String targetUserId = targetUserDetails.get_id();
-        Account currentUser = db.getAccount((String) session.getAttribute("username"));
-        String currentUserId = currentUser.get_id();
-        Privacy privacy = db.getPrivacy(targetUserId);
-        if(!(privacy.isPrivate)){
-            getUser(targetUser,session);
-        }
     }
+
+//    @GetMapping(value = "/searchUsername", produces = "application/json")
+//    public void searchUser(@RequestParam String targetUser, HttpSession session) throws NoSuchAlgorithmException, IOException {
+//        Account targetUserDetails = db.getAccount(targetUser);
+//        String targetUserId = targetUserDetails.get_id();
+//        Account currentUser = db.getAccount((String) session.getAttribute("username"));
+//        String currentUserId = currentUser.get_id();
+//        Privacy privacy = db.getPrivacy(targetUserId);
+//        if(!(privacy.isPrivate)){
+//            getUser(targetUser,session);
+//        }
+//    }
 
     @GetMapping(value = "/searchImageDesc", produces = "application/json")
     public String searchImageDesc(@RequestParam String description, HttpSession session) throws NoSuchAlgorithmException, IOException {
