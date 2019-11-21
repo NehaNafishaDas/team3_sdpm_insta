@@ -3,7 +3,7 @@ import axios from 'axios';
 
 
 import {Redirect} from 'react-router-dom'
-axios.defaults.withCredentials = false;
+axios.defaults.withCredentials = true;
 
 class Login extends Component {
     constructor(props) {

@@ -126,7 +126,8 @@ class OtherUserProfiles extends Component {
 
     render() {
         
-            const {Image,userData,liked,userCommentData,isfollowing,userDetails} = this.state
+            const {Image,userData,liked,userCommentData,isfollowing,userDetails,loggedInUsername} = this.state
+            console.log(loggedInUsername)
             console.log(isfollowing)
             const { username} = this.props.location.state
            console.log(Image)
@@ -164,7 +165,7 @@ class OtherUserProfiles extends Component {
             const avatar = userDetails ?  <div class="avatar-display user-image" style={{backgroundImage : "url('" + userDetails.profilepicture + "')",backgroundSize : "cover",backgroundPosition : 'center'}}></div>:null
             return (
             <div class = "container">
-            <NavBar getAccountPicture = {this.getAccountPicture}/>
+            <NavBar getAccountPicture = {this.getAccountPicture} username = {loggedInUsername}/>
             <div id="body">
             <div class="user-profile">
                 <div class="profile-brief clearfix">

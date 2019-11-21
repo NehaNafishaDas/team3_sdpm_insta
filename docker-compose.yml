@@ -14,11 +14,7 @@ services:
     image: mongo
     ports:
       - '27017:27017'
-  back-end-service :
-    container_name: backend-service
-    build: ./back-end
-    ports:
-      - '8081:8080'
+  
 
     
   

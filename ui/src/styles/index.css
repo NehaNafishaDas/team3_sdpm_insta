@@ -68,8 +68,54 @@
   }
 
   .add-button {
-    font-size: 2em;
-    
-	}
+    font-size: 2em;  
+  }
+  
+  .album-list {
+    width: 310px;
+    height: 65vh;
+    border-right: 1px solid #dbdbdb;
+    position: absolute;
+    margin-top:-25px;
+    margin-left:-10px;
+    display:block;
+    list-style:none;
+ 
+  }
+
+  .album-list li {
+    font-size: 1.3em;
+    padding-top: 20px;
+    font-weight:350;
+    line-height: 2em;
+    cursor: pointer; 
+}
+
+.list4 { 
+  width:320px; 
+  font-family:Georgia, Times, serif; 
+  font-size:15px; 
+}
+.list4 ul { 
+  list-style: none; 
+  overflow: auto;
+  max-height: 400px;
+}
+.list4 ul li {
+  display:block;
+  text-decoration:none; 
+  color:#000000;
+  background-color:#FFFFFF;
+  line-height:30px;
+  border-bottom-style:solid; 
+  border-bottom-width:1px; 
+  border-bottom-color:#CCCCCC;
+  padding-left:10px; 
+  padding-top:20px;
+  cursor:pointer;
+ }
+
+
+
 
   

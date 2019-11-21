@@ -35,6 +35,7 @@ class Post extends Component {
         data.append("images",this.state.selectedFile)
         data.append("description",this.state.description)
         data.append("location",this.state.location)
+        data.append("tags",this.state.tags)
 
         axios.post(`http://localhost:8081/imagepost`,data,{headers: {
             'Content-Type': 'multipart/form-data'

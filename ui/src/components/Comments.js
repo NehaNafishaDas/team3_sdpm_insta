@@ -8,14 +8,13 @@ class Comments extends Component {
     }
 
     handleKeyPress=(e)=>{
-        console.log(e)
-        console.log(this.props.id)
+       
         if(e.key==='Enter'){
             e.preventDefault();
             axios.post(`http://localhost:8081/writecomment?postid=${this.props.id}&comment=${e.target.value}`).then(res=>{
                 console.log(res)
-                this.props.userPostDetails(this.props.id)
                 this.props.onClickViewPost(this.props.id)
+                this.props.userPostDetails(this.props.id)
                 this.props.getAccountPicture()
             }).catch(error=>{
 

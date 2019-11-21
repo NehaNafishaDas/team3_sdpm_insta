@@ -44,7 +44,7 @@ class Home extends Component {
  
     render() {
 
-    const {followersData} = this.state
+    const {followersData,username} = this.state
     const followers = followersData ? ( followersData.map(follower =>{    
         return( 
            <UserFollowersList username ={this.state.username} getFollowersInfo = {this.getFollowersInfo} isLiked = {this.isLiked}  follower = {follower} keyy = {follower._id}/>
@@ -53,7 +53,7 @@ class Home extends Component {
   
         return (
             <div class = "container">
-                <NavBar ID = {this.props.ID} getFollowersInfo = {this.getFollowersInfo} />
+                <NavBar ID = {this.props.ID} getFollowersInfo = {this.getFollowersInfo} username = {username} />
                 <div id="body">
                     <ul class="post-list">
                         {followers}

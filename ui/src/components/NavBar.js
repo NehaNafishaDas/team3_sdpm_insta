@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom'
+import image from '../img/album.png'
+import AlbumMenu from './AlbumMenu'
 
 import Post from './Post'
+
 class NavBar extends Component {
     constructor(props) {
         super(props);
-        this.state = { activePostModal:false, activeNotificationModal:false };
+        this.state = { activePostModal:false, activeNotificationModal:false,activeAlbumModal:false };
         this.notificationList = React.createRef();
         this.onclickNotification = this.onclickNotification.bind(this)
     }
@@ -19,11 +22,15 @@ class NavBar extends Component {
     }
 
     handleModalClose = ()=>{
-        this.setState({activePostModal:false})
+        this.setState({activePostModal:false,activeAlbumModal:false})
+    }
+
+    onClickAlbumMenu = ()=>{
+        this.setState({activeAlbumModal:'activeAlbumModal'})
     }
 
     render() {
-        const {activePostModal} = this.state
+        const {activePostModal,activeAlbumModal} = this.state
         return (
             <div id="top">
             <div class="topbar clearfix">
@@ -60,10 +67,13 @@ class NavBar extends Component {
                     </li>
    
                     <Link to={{pathname: '/profile',state: {username:this.props.username}}} username = {this.props.username} activeClassName="current"><li class="link user-icon profile"></li></Link>
+                    <li class = "link" onClick = {this.onClickAlbumMenu}><img src = {image} style = {{maxWidth:26}} onClick = {this.onClickAlbumMenu} alt = "..." /></li>
                 </ul>
 
             </div>
             {activePostModal === "activePostModal"? <Post ID={this.props.ID} avatarMedium = {this.avatarMedium} username = {this.props.username} getFollowersInfo = {this.props.getFollowersInfo} getAccountPicture = {this.props.getAccountPicture} handleModalClose={this.handleModalClose.bind(this)} /> : null}
+
+            {activeAlbumModal==='activeAlbumModal'?<AlbumMenu handleModalClose = {this.handleModalClose}/>:null}
         </div>
         );
     }

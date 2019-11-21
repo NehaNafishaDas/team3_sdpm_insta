@@ -5,6 +5,7 @@ import ViewPicture from './ViewPicture';
 import LikeIcon from './LikeIcon';
 import Comments from './Comments';
 import CommentWithImage from './CommentWithImage'
+import image from '../img/gear.svg'
 
 class Profile extends Component {
     constructor(props) {
@@ -38,7 +39,9 @@ class Profile extends Component {
 
     userPostDetails = (id)=>{
 		axios.get(`http://localhost:8081/getpost?postid=${id}`).then(res=>{
+            console.log(res.data.tags)
             this.setState({userData:res.data})
+            this.setState({tags:res.data.tags})
 		}).catch(error=>{
 
         })
@@ -69,6 +72,7 @@ class Profile extends Component {
 
     checkLogin= ()=>{
         axios.get('http://localhost:8081/loginstatus').then(res=>{
+            console.log(res)
             this.setState({username:res.data.username})
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")
@@ -142,7 +146,7 @@ class Profile extends Component {
     }
 
     render() {
-        const {Image,userData,liked,userCommentData,username,userDetails,activeCommentWithPictureModal} = this.state
+        const {Image,userData,liked,userCommentData,tags,username,userDetails,activeCommentWithPictureModal} = this.state
        console.log(userData)
 
 
@@ -173,6 +177,13 @@ class Profile extends Component {
                     <li  class="comment" style = {{maxWidth:300}}> <span class="username">{comment.username}  </span><img src ={comment.image} style = {{maxWidth:300}}alt = "...."/></li>
                 )
                 }) ): null
+
+            const Tags = tags ? ( tags.map(tag =>{    
+                 console.log(tag)
+                return( 
+                    <p style ={ {paddingBottom:10,paddingLeft:5,paddingRight:5,display: 'inline'}}>#{tag}</p>
+                )
+                }) ): null
     
 
 
@@ -200,6 +211,7 @@ class Profile extends Component {
                         {userName}
                          {/* <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button>  */}
                          <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button> 
+                         <img src = {image} style = {{maxWidth:26, marginLeft:'10px',marginTop:'30px'}} alt = "..." />
                         <div class="analysis clearfix">
                             <p class="data posts"><span class="value">{Image.length}</span> posts</p>
                             {followedUsersCount}
@@ -230,7 +242,9 @@ class Profile extends Component {
                                 {datePosted}		
 							</div>
                             {caption}
-                            <p style ={ {paddingBottom:6}}>#philly #beards #international #philly #beards #international</p>
+                           {Tags}
+                           <br></br>
+                           <br></br>
 							<ul class="post-comments">
                                 {CommentList}
                                 {CommentImage}
