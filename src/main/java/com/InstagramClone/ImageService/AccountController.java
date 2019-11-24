@@ -9,14 +9,7 @@ import javax.servlet.http.HttpSession;
 import com.InstagramClone.model.*;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -60,10 +53,6 @@ public class AccountController {
             return om.writeValueAsString(response);
         } else {
             String id = db.createAccount(account);
-            Privacy privacy = new Privacy(id,false);
-            db.createPrivacy(privacy);
-            BlockedUser blockedUsers = new BlockedUser(id,null);
-            db.createBlockList(blockedUsers);
             response.put("status", "success");
             response.put("username", username);
             response.put("_id", id);
@@ -127,55 +116,79 @@ public class AccountController {
         }
     }
 
-    // TODO
-    @PostMapping(value = "/blockuser/{account:.+}", produces = "application/json")
+    @PostMapping(value = "/blockuser", produces = "application/json")
     public @ResponseBody
-    String blockUser(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+    String blockUser(@RequestParam String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
         String currentUser = (String) session.getAttribute("username");
         Account currentAccount = db.getAccount(currentUser);
-        String currentUserId = currentAccount.get_id();
-        db.addToBlockedList(currentUserId, account);
+        Account targetAccount = db.getAccount(account);
+        if(targetAccount == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "target account not found");
+        if(currentAccount == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "account error");
+        db.addToBlockedList(currentAccount._id, targetAccount._id);
         ObjectNode response = om.createObjectNode();
         response.put("status", "User has been blocked.");
         return om.writeValueAsString(response);
     }
-    
-    @PostMapping(value = "/setPrivate/{account:.+}", produces = "application/json")
+
+    @PostMapping(value = "/toggleblock", produces = "application/json")
     public @ResponseBody
-    String setPrivate(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+    String toggleBlock(@RequestParam String targetaccount, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
         String currentUser = (String) session.getAttribute("username");
-        Account currentAccount = db.getAccount(currentUser);
-        String currentUserId = currentAccount.get_id();
-        db.changePrivacy(currentUserId, true);
         ObjectNode response = om.createObjectNode();
-        response.put("status", "User has set to private.");
+        Account currentAccount = db.getAccount(currentUser);
+        Account targetAccount = db.getAccount(targetaccount);
+        if(targetAccount == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "target account not found");
+        if(currentAccount == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "account error");
+        if(currentAccount.blockedUsers.contains(targetAccount._id)) {
+            db.removeFromBlockedList(currentAccount._id, targetAccount._id);
+            response.put("status", targetAccount.getUsername() + " has been unblocked.");
+        }
+        else {
+            db.addToBlockedList(currentAccount._id, targetAccount._id);
+            response.put("status", targetAccount.getUsername() + " has been blocked.");
+        }
         return om.writeValueAsString(response);
     }
 
-    // TODO
-    @PostMapping(value = "/unblockuser/{account:.+}", produces = "application/json")
+
+
+
+    @PostMapping(value = "/setprivate", produces = "application/json")
     public @ResponseBody
-    String unblockUser(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+    String setPrivate(@RequestParam boolean privacy, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
         String currentUser = (String) session.getAttribute("username");
         Account currentAccount = db.getAccount(currentUser);
-        String currentUserId = currentAccount.get_id();
-        db.removeFromBlockedList(currentUserId, account);
+        db.changePrivacy(currentAccount._id, privacy);
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "User privacy is set to " + privacy);
+        return om.writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/unblockuser", produces = "application/json")
+    public @ResponseBody
+    String unblockUser(@RequestParam String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+        String currentUser = (String) session.getAttribute("username");
+        Account currentAccount = db.getAccount(currentUser);
+        Account targetAccount = db.getAccount(account);
+        if(targetAccount == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "target account not found");
+        if(currentAccount == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "account error");
+        db.removeFromBlockedList(currentAccount._id, targetAccount._id);
         ObjectNode response = om.createObjectNode();
         response.put("status", "User has been unblocked.");
         return om.writeValueAsString(response);
     }
     
-    @PostMapping(value = "/unsetPrivate/{account:.+}", produces = "application/json")
-    public @ResponseBody
-    String unsetPrivate(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
-        String currentUser = (String) session.getAttribute("username");
-        Account currentAccount = db.getAccount(currentUser);
-        String currentUserId = currentAccount.get_id();
-        db.changePrivacy(currentUserId, false);
-        ObjectNode response = om.createObjectNode();
-        response.put("status", "User has set to public.");
-        return om.writeValueAsString(response);
-    }
+//    @PostMapping(value = "/unsetPrivate/{account:.+}", produces = "application/json")
+//    public @ResponseBody
+//    String unsetPrivate(@PathVariable String account, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
+//        String currentUser = (String) session.getAttribute("username");
+//        Account currentAccount = db.getAccount(currentUser);
+//        String currentUserId = currentAccount.get_id();
+//        db.changePrivacy(currentUserId, false);
+//        ObjectNode response = om.createObjectNode();
+//        response.put("status", "User has set to public.");
+//        return om.writeValueAsString(response);
+//    }
 
     @PostMapping(value = "/changepassword", produces = "application/json")
     public String changePassword(@RequestParam String oldpassword,
@@ -312,10 +325,15 @@ public class AccountController {
                 return om.writeValueAsString(response);
             }
             if(!a.followedUsers.contains(target._id)) {
-                db.followUser(target._id, a._id);
-                response.put("status", "success");
-                response.put("error", "Now following user " + targetaccount);
-                return om.writeValueAsString(response);
+                if(db.followUser(target._id, a._id)) {
+                    response.put("status", "success");
+                    response.put("error", "Now following user " + targetaccount);
+                    return om.writeValueAsString(response);
+                } else {
+                    response.put("status", "failed");
+                    response.put("error", "user is private");
+                    return om.writeValueAsString(response);
+                }
             } else {
                 db.unfollowUser(target._id, a._id);
                 response.put("status", "success");
@@ -429,16 +447,34 @@ public class AccountController {
 
     @GetMapping(value = "/getuser", produces = "application/json")
     public @ResponseBody
-    String getUser(@RequestParam String userid) throws IOException {
+    String getUser(@RequestParam String userid, HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        Account currentUser = db.getAccount(loggedInAs);
+
+        if(currentUser == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid logged in account");
         if(userid == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "no userid received");
 
         Account account = db.getAccount(userid);
+        if(account == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "no account found with that id");
+        }
+
         ObjectNode response = om.createObjectNode();
         response.put("_id", account.get_id());
         response.put("username", account.getUsername());
         response.put("firstName", account.getFirstName());
         response.put("lastName", account.getLastName());
+        if(account.blockedUsers.contains(currentUser._id)){
+            response.put("status", "blockedbythem");
+        } else if(currentUser.blockedUsers.contains(account._id)){
+            response.put("status", "blockedbyyou");
+        } else if(!account.followedUsers.contains(currentUser._id) && account.isPrivate) {
+            response.put("status", "private");
+        } else {
+            response.put("status", "public");
+        }
         response.put("bio", account.getBio());
         response.put("email", account.getEmail());
         response.put("profilepicture", account.getProfilepicture());
@@ -698,7 +734,7 @@ public class AccountController {
         return om.writeValueAsString(response);
     }
 
-    @PostMapping(value = "/removeUserFromAlbum", produces = "application/json")
+    @DeleteMapping(value = "/removeuserfromalbum", produces = "application/json")
     public @ResponseBody
     String removeUserFromAlbum(@RequestParam String username,
                                @RequestParam String album,
@@ -717,7 +753,7 @@ public class AccountController {
                 if(currentAlbum.getGroup().contains(target._id)) {
                     db.removeUserFromAlbum(username, currentAlbum.get_id());
                     response.put("status", "success");
-                    response.put("error", "user successfully added to album");
+                    response.put("error", "user removed from album");
                     return om.writeValueAsString(response);
                 } else {
                     response.put("status", "failed");
@@ -736,33 +772,38 @@ public class AccountController {
         return db.getPopularPosts();
     }
 
-//    @GetMapping(value = "/searchUsername", produces = "application/json")
-//    public void searchUser(@RequestParam String targetUser, HttpSession session) throws NoSuchAlgorithmException, IOException {
-//        Account targetUserDetails = db.getAccount(targetUser);
-//        String targetUserId = targetUserDetails.get_id();
-//        Account currentUser = db.getAccount((String) session.getAttribute("username"));
-//        String currentUserId = currentUser.get_id();
-//        Privacy privacy = db.getPrivacy(targetUserId);
-//        if(!(privacy.isPrivate)){
-//            getUser(targetUser,session);
-//        }
-//    }
+    @GetMapping(value = "/searchusername", produces = "application/json")
+    public ArrayList<String> searchUser(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
+        return db.searchUsername(query);
+    }
 
-    @GetMapping(value = "/searchImageDesc", produces = "application/json")
+    @GetMapping(value = "/searchimagedesc", produces = "application/json")
     public String searchImageDesc(@RequestParam String description, HttpSession session) throws NoSuchAlgorithmException, IOException {
        ArrayList<Post> post = db.getPost(description);
        ArrayList<Post> allPost = new ArrayList<>();
        ObjectNode response = om.createObjectNode();
-       Privacy privacy;
-       BlockedUser blockedUser;
+       //Privacy privacy;
+       //BlockedUser blockedUser;
        for(Post p : post) {
-           privacy = db.getPrivacy(p.getUsername());
-           blockedUser = db.getBlockList(p.getUsername());
-           List<String> blockedList=blockedUser.getBlockedUsers();
-           if (!(privacy.isPrivate) && !(blockedList.contains(session.getAttribute("username"))))
+           // TODO Reimplement privacy
+           //privacy = db.getPrivacy(p.getUsername());
+           //blockedUser = db.getBlockList(p.getUsername());
+           //List<String> blockedList=blockedUser.getBlockedUsers();
+
+           //if (!(privacy.isPrivate) && !(blockedList.contains(session.getAttribute("username"))))
                allPost.add(p);
        }
        response.putPOJO("posts", allPost);
        return om.writeValueAsString(response);
+    }
+
+    @GetMapping(value = "/search", produces = "application/json")
+    public String search(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
+        ObjectNode response = om.createObjectNode();
+        ArrayList<String> usernames = db.searchUsername(query);
+        response.putPOJO("username", usernames);
+        ArrayList<Post> posts = db.getPost(query);
+        response.putPOJO("description", posts);
+        return om.writeValueAsString(response);
     }
 }

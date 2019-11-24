@@ -17,7 +17,7 @@ public class Account {
     public String bio;
     public String firstName;
     public String lastName;
-    public int postCount;
+    public boolean isPrivate;
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ArrayList<ObjectId> posts;
 	@JsonSerialize(using = ToStringSerializer.class)
@@ -28,8 +28,10 @@ public class Account {
 	public ArrayList<ObjectId> likedPosts;
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ArrayList<ObjectId> albums;
-    
-    public Account(String username, String password) {
+	@JsonSerialize(using = ToStringSerializer.class)
+	public ArrayList<ObjectId> blockedUsers;
+
+	public Account(String username, String password) {
     	this._id = new ObjectId();
     	this.username = username;
     	this.email = "";
@@ -38,12 +40,13 @@ public class Account {
     	this.bio = "";
     	this.firstName = "";
     	this.lastName = "";
+    	this.isPrivate = false;
     	this.posts = new ArrayList<>();
     	this.followedUsers = new ArrayList<>();
     	this.followedBy = new ArrayList<>();
     	this.likedPosts = new ArrayList<>();
     	this.albums = new ArrayList<>();
-    	this.postCount = 0;
+    	this.blockedUsers = new ArrayList<>();
     }
     
     public Account() {}
@@ -112,12 +115,12 @@ public class Account {
 		this.lastName = lastName;
 	}
 
-	public int getPostCount() {
-		return postCount;
+	public boolean isPrivate() {
+		return isPrivate;
 	}
 
-	public void setPostCount(int postCount) {
-		this.postCount = postCount;
+	public void setPrivate(boolean aPrivate) {
+		isPrivate = aPrivate;
 	}
 
 	public ArrayList<ObjectId> getPosts() {
@@ -158,5 +161,13 @@ public class Account {
 
 	public void setAlbums(ArrayList<ObjectId> albums) {
 		this.albums = albums;
+	}
+
+	public ArrayList<ObjectId> getBlockedUsers() {
+		return blockedUsers;
+	}
+
+	public void setBlockedUsers(ArrayList<ObjectId> blockedUsers) {
+		this.blockedUsers = blockedUsers;
 	}
 }

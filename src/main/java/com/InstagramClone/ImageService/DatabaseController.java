@@ -12,12 +12,16 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import com.InstagramClone.model.*;
 import com.mongodb.client.*;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -36,8 +40,6 @@ public class DatabaseController {
 	private MongoCollection<Post> postDb;
 	private MongoCollection<Account> accountDb;
 	private MongoCollection<Album> albumDb;
-	private MongoCollection<Privacy> privacyDb;
-	private MongoCollection<BlockedUser> blockedUserDb;
 
 	private DatabaseController () {
 		Properties prop = new Properties();
@@ -62,17 +64,11 @@ public class DatabaseController {
 	    database = database.withCodecRegistry(pojoCodecRegistry);
 	    imageDb = database.getCollection("Images", Image.class);
 	    postDb = database.getCollection("Posts", Post.class);
+	    postDb.createIndex(Indexes.text("description"));
 	    accountDb = database.getCollection("Accounts", Account.class);
 		albumDb = database.getCollection("Albums", Album.class);
-	    privacyDb = database.getCollection("Privacy", Privacy.class);
-	    blockedUserDb = database.getCollection("BlockedUser", BlockedUser.class);
 	}
-	
-	// Insert an image object into the database given an image object
-//	public void insertImage(Image image) {
-//	    imageDb.insertOne(image);
-//	}
-	
+
 	// Return image object given an objectid as a string
 	public Image getImage(String id) {
 		return imageDb.find(eq("_id", new ObjectId(id))).first();
@@ -93,13 +89,13 @@ public class DatabaseController {
 	}
 	
 	//Create a privacy flag table with same id as the account._id and a flag
-	public void createPrivacy(Privacy privacy) throws NoSuchAlgorithmException {
-		privacyDb.insertOne(privacy);
-	}
-	
-	public void createBlockList(BlockedUser blockedUsers) throws NoSuchAlgorithmException {
-		blockedUserDb.insertOne(blockedUsers);
-	}
+//	public void createPrivacy(Privacy privacy) throws NoSuchAlgorithmException {
+//		privacyDb.insertOne(privacy);
+//	}
+//
+//	public void createBlockList(BlockedUser blockedUsers) throws NoSuchAlgorithmException {
+//		blockedUserDb.insertOne(blockedUsers);
+//	}
 	
 	public Account checkAccount(String username, String password) throws NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance("MD5");
@@ -117,10 +113,14 @@ public class DatabaseController {
 		}
 	}
 
-	public String followUser(ObjectId targetAccount, ObjectId currentAccount) {
+	public boolean followUser(ObjectId targetAccount, ObjectId currentAccount) {
+		Account target = getAccount(targetAccount);
+		if(target.isPrivate && !target.followedUsers.contains(currentAccount)){
+			return false;
+		}
 		accountDb.updateOne(eq("_id", currentAccount), Updates.addToSet("followedUsers", targetAccount));
 		accountDb.updateOne(eq("_id", targetAccount), Updates.addToSet("followedBy", currentAccount));
-		return "success";
+		return true;
 	}
 
 	public void changePassword(ObjectId targetAccount, String newPassword) {
@@ -141,6 +141,18 @@ public class DatabaseController {
 		return accountDb.find(eq("_id", id)).first();
 	}
 
+	public ArrayList<String> searchUsername(String search) {
+		Pattern regex = Pattern.compile(search, Pattern.CASE_INSENSITIVE);
+		Bson filter = Filters.eq("username", regex);
+		MongoCursor<Account> iterator = accountDb.find(filter).iterator();
+		ArrayList<String> list = new ArrayList<>();
+		while(iterator.hasNext()) {
+			Account a = iterator.next();
+			list.add(a.getUsername());
+		}
+		return list;
+	}
+
 	// Return account object given an username as a string
 	public Account getAccount(String username) {
 		return accountDb.find(eq("username", username)).first();
@@ -151,22 +163,23 @@ public class DatabaseController {
 	}
 
 	public ArrayList<Post> getPost(String description){
-		String similarDesc = "/.*"+description+".*/";
-		FindIterable<Post> posts = postDb.find(eq("description",similarDesc));
+		FindIterable<Post> posts  = postDb.find(Filters.text(description));
 		MongoCursor<Post> iterator = posts.iterator();
-		ArrayList<Post> response = new ArrayList<Post>();
+		ArrayList<Post> response = new ArrayList<>();
 		while(iterator.hasNext()) {
 			response.add(iterator.next());
 		}
 		return response;
 	}
 
-	public Privacy getPrivacy(String userId) throws NoSuchAlgorithmException {
-		return privacyDb.find(eq("userId", userId)).first();
+	public boolean getPrivacy(String username) {
+		Account account = getAccount(username);
+		return account.isPrivate;
 	}
 	
-	public BlockedUser getBlockList(String currentUser) throws NoSuchAlgorithmException {
-		return blockedUserDb.find(eq("currentUser", currentUser)).first();
+	public ArrayList<ObjectId> getBlockList(String username) {
+		Account account = getAccount(username);
+		return account.blockedUsers;
 	}
 
 	public void setProfilePicture(ObjectId targetAccount, String url) {
@@ -270,12 +283,8 @@ public class DatabaseController {
 		albumDb.updateOne(eq("_id", albumId), Updates.pull("group", account._id));
 	}
 
-	// Returns a list of posts based on a bson query
-	public FindIterable<Post> postFind(Bson query) {
-		return postFind(query);
-	}
-	
-    public static DatabaseController getInstance() 
+
+    public static DatabaseController getInstance()
     { 
         if (single_instance == null) 
             single_instance = new DatabaseController(); 
@@ -283,17 +292,19 @@ public class DatabaseController {
         return single_instance; 
     }
     
-    public void changePrivacy(String currentUserId, boolean isPrivate) {
-    	privacyDb.updateOne(eq("userId", currentUserId), Updates.set("isPrivate", isPrivate));
+    public void changePrivacy(ObjectId currentUserId, boolean isPrivate) {
+    	accountDb.updateOne(eq("_id", currentUserId), Updates.set("isPrivate", isPrivate));
 	}
   
-    public void addToBlockedList(String currentUser, String targetUser) {
-    	blockedUserDb.updateOne(eq("userId", currentUser), Updates.addToSet("blockedUsers", targetUser));
+    public void addToBlockedList(ObjectId currentUser, ObjectId targetUser) {
+		Account account = accountDb.find(eq("_id", currentUser)).first();
+		if(!account.blockedUsers.contains(targetUser)) {
+			accountDb.updateOne(eq("_id", currentUser), Updates.addToSet("blockedUsers", targetUser));
+		}
 	}
     
-    public void removeFromBlockedList(String currentUser, String targetUser) {
-    	blockedUserDb.updateOne(eq("userId", currentUser), Updates.pull("blockedUsers", targetUser));
+    public void removeFromBlockedList(ObjectId currentUser, ObjectId targetUser) {
+		accountDb.updateOne(eq("_id", currentUser), Updates.pull("blockedUsers", targetUser));
 	}
-
 
 }
