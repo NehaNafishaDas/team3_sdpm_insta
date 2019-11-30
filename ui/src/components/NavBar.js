@@ -1,36 +1,123 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom'
 import image from '../img/album.png'
+import imageSearch from '../icons/image.png'
 import AlbumMenu from './AlbumMenu'
-
+import axios from "axios"
+import SearchResult from './SearchResult'
+import SearchDescription from './SearchDescription'
 import Post from './Post'
+import SearchTag from './SearchTag'
+import  ImageSearch from './ImageSearch'
+
 
 class NavBar extends Component {
     constructor(props) {
         super(props);
-        this.state = { activePostModal:false, activeNotificationModal:false,activeAlbumModal:false };
+        this.state = { activePostModal:false, activeNotificationModal:false,activeAlbumModal:false, searchResult:[],activeImageSearchModal:false };
         this.notificationList = React.createRef();
-        this.onclickNotification = this.onclickNotification.bind(this)
+        this.search = React.createRef();
+        this.onInputSearch = this.onInputSearch.bind(this)
+    }
+
+    componentWillMount(){
+    //   console.log(this.search)
+     
     }
 
     onClickPost = ()=>{
         this.setState({activePostModal:"activePostModal"})
     }
 
-    onclickNotification(){
-        this.notificationList.current.classList.toggle("notif-list-active");
+    onInputSearch(e){
+        this.notificationList.current.classList.add("notif-list-active");
+
+        if(e.target.value === ""){
+            this.setState({searchResult:[]})
+        }
+
+        let value = e.target.value;
+
+        axios.get(`http://localhost:8081/search?query=${value}`).then(res=>{
+            console.log(res)
+            this.setState({searchResult:res.data.username})
+            const description = Object.values(res.data.description)
+            this.setState({description:description});
+            const tag = Object.values(res.data.tag)
+            this.setState({tag:tag});
+        })
+
     }
 
     handleModalClose = ()=>{
-        this.setState({activePostModal:false,activeAlbumModal:false})
+        this.setState({activePostModal:false,activeAlbumModal:false,activeImageSearchModal:false})
     }
 
     onClickAlbumMenu = ()=>{
         this.setState({activeAlbumModal:'activeAlbumModal'})
     }
 
+    onClickUserProfile= ()=>{
+        this.notificationList.current.classList.remove("notif-list-active");
+    }
+
+    onImageSearch = ()=>{
+        this.setState({activeImageSearchModal:"activeImageSearchModal"})
+    }
+
+
+    
+
+
     render() {
-        const {activePostModal,activeAlbumModal} = this.state
+        const {activePostModal,activeAlbumModal,searchResult,description,tag,activeImageSearchModal} = this.state
+
+        const descriptionSearch =  description ?( description.map(description=>{    
+          
+             if(description.description)
+            return( 
+                <li class="notif clearfix"> 
+                <div class="notif-info">
+                     <SearchDescription id = {description._id} data = {description.username} description= {description.description} onClickUserProfile = {this.onClickUserProfile}/>    
+                 </div>
+                 </li>
+            )
+            }) ):null
+
+            const tagSearch =  tag ?( tag.map(tag=>{    
+                console.log(tag.tags)
+                
+                  
+                    return( 
+                        <li class="notif clearfix"> 
+                        <div class="notif-info">
+                             <SearchTag id = {tag.id} data = {tag.username} tag = {tag.tag} onClickUserProfile = {this.onClickUserProfile}/>    
+                         </div>
+                         </li>
+                    )
+                 
+                
+                }) ):null
+    
+       
+
+        const accountNames  = searchResult ?  searchResult.map(search=>{
+          
+            if(search.name)
+            return(
+                <li class="notif clearfix">
+                <div class="avatar-def user-image" style={{backgroundImage : "url('" + search.profilepicture + "')",backgroundSize : "cover",backgroundPosition : 'center'}} ></div>
+                <div class="notif-info">
+                <SearchResult  data = {search.name} onClickUserProfile = {this.onClickUserProfile} />
+                </div>
+            
+                
+                </li>
+                
+               
+            )
+        }) : null
+
         return (
             <div id="top">
             <div class="topbar clearfix">
@@ -40,29 +127,19 @@ class NavBar extends Component {
                         <li class="insta-logo-type"></li>
                     </ul>
                 </Link>
-                <input type="text" class="text-field search" placeholder="Search"/>
+                <input type="text" class="text-field search"  ref = {this.search} onInput = {this.onInputSearch} placeholder="Search"/>
+               
                 <ul class="links">
+                   <img src = {imageSearch} style = {{maxWidth:16,marginLeft:'-330px'}} onClick = {this.onImageSearch} alt = "..." />
                     <li class="link explore-icon explore" onClick = {this.onClickPost}></li>
                     <li class="link notifications" >
-                        <div class="like-icon" onClick = {this.onclickNotification}></div>
                         <ul class="notif-list" ref = {this.notificationList}>
-                            <li class="notif clearfix">
-                                <div class="avatar-def user-image img2"></div>
-                                <div class="notif-info">
-                                    <p class="notif-msg"><span class="username">shades_of_lin</span> liked your photo. <span class="notif-time">1h</span></p>
-                                    <div class="notif-image"></div>
-                                </div>
-                            </li>
-                           
-                            <li class="notif clearfix">
-                                <div class="avatar-def user-image img1"></div>
-                                <div class="notif-info">
-                                    <p class="notif-msg"><span class="username">don_prince</span> started following you. <span class="notif-time">3h</span></p>
-                                    <button class="def-button follow">follow</button>
-                                </div>
-                            </li>
-                           
-                        
+                         
+                          <li class="notif clearfix" >
+                                   {accountNames}  
+                                   {descriptionSearch}     
+                                   {tagSearch}                 
+                          </li>
                         </ul>
                     </li>
    
@@ -74,6 +151,8 @@ class NavBar extends Component {
             {activePostModal === "activePostModal"? <Post ID={this.props.ID} avatarMedium = {this.avatarMedium} username = {this.props.username} getFollowersInfo = {this.props.getFollowersInfo} getAccountPicture = {this.props.getAccountPicture} handleModalClose={this.handleModalClose.bind(this)} /> : null}
 
             {activeAlbumModal==='activeAlbumModal'?<AlbumMenu handleModalClose = {this.handleModalClose}/>:null}
+            {activeImageSearchModal==='activeImageSearchModal'?<ImageSearch handleModalClose = {this.handleModalClose}/>:null}
+           
         </div>
         );
     }

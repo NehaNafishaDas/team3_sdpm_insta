@@ -42,6 +42,7 @@ class AlbumMenu extends Component {
         this.setState({activeViewAlbum:false})
         this.setState({activeRemoveAlbum:false})
         this.setState({activeAddUserToAlbum:'activeAddUserToAlbum'})
+
     }
 
     onAddPictureToAlbum = ()=>{
@@ -50,6 +51,7 @@ class AlbumMenu extends Component {
         this.setState({activeViewAlbum:false})
         this.setState({activeRemoveAlbum:false}) 
         this.setState({activeAddPictureToAlbum:'activeAddPictureToAlbum'})
+      
     }
 
     onViewAlbum = ()=>{
@@ -66,6 +68,7 @@ class AlbumMenu extends Component {
         this.setState({activeAddPictureToAlbum:false})
         this.setState({activeViewAlbum:false})
         this.setState({activeRemoveAlbum:'activeRemoveAlbum'}) 
+
     }
 
     render() {
@@ -84,7 +87,7 @@ class AlbumMenu extends Component {
                { activeCreateAlbum ==='activeCreateAlbum'? <CreateAlbum handleModalClose = {this.handleModalClose}/>:null}
                {activeAddUserToAlbum ==='activeAddUserToAlbum'? <AddUserToAlbum handleModalClose = {this.handleModalClose}/>:null}
                {activeAddPictureToAlbum ==='activeAddPictureToAlbum'? <AddPictureToAlbum handleModalClose = {this.handleModalClose}/>:null}
-               {activeRemoveAlbum === 'activeRemoveAlbum'?<RemoveAlbum/>:null}
+               {activeRemoveAlbum === 'activeRemoveAlbum'?<RemoveAlbum handleModalClose = {this.handleModalClose} />:null}
                {activeViewAlbum==='activeViewAlbum'?<AlbumList/>:null}
                 </div>
             </div>

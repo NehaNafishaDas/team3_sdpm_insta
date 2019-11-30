@@ -13,15 +13,15 @@ class CommentInfo extends Component {
     }
 
     componentDidMount(){
-        const {id} = this.props.location.state
+        const id = this.props.match.params.id
         this.onClickViewPost(id)
     }
 
     onClickViewPost(id){
         this.userPostDetails(id)
         this.setState({id:id})
-
-        axios.get(`http://localhost:8081/isliked?postid=${id}&username=${this.props.location.state.username}`).then(res=>{
+        const username = this.props.match.params.username
+        axios.get(`http://localhost:8081/isliked?postid=${id}&username=${username}`).then(res=>{
             this.setState({liked:res.data.liked})
         }).catch(error=>{
 

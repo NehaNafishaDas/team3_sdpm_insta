@@ -115,6 +115,28 @@
   cursor:pointer;
  }
 
+ .private {
+  font-size: 2em;
+  padding-top: 20px;
+  font-weight:350;
+  line-height: 2em;
+
+ }
+
+
+ .private-small {
+  font-size: 1em;
+  padding-top: 20px;
+  font-weight:350;
+  line-height: 2em;
+
+ }
+
+ .account-privacy{
+   
+   padding-top:50px;
+ }
+
 
 
 

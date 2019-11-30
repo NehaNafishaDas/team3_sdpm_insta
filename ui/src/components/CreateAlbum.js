@@ -17,6 +17,7 @@ class CreateAlbum extends Component {
             console.log(error)
         })
 
+        this.props.handleModalClose()
         this.setState({name:''})
 
     }

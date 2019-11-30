@@ -7,14 +7,7 @@ services:
       - ./ui:/usr/src/app 
     ports: 
       - 3000:3000 
-    links:
-      - mongodb
-  mongodb:
-    container_name: mongodb
-    image: mongo
-    ports:
-      - '27017:27017'
-  
-
+    
+ 
     
   

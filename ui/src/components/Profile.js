@@ -6,11 +6,12 @@ import LikeIcon from './LikeIcon';
 import Comments from './Comments';
 import CommentWithImage from './CommentWithImage'
 import image from '../img/gear.svg'
+import Settings from './Settings';
 
 class Profile extends Component {
     constructor(props) {
         super(props);
-        this.state = { activeViewPost:false,activeHover:null, activeCommentWithPictureModal:false,Image:[] ,imagePost:null ,activeLike:null,selectedFile:null};
+        this.state = { activeViewPost:false,activeHover:null, activeCommentWithPictureModal:false,Image:[] ,imagePost:null ,activeLike:null,selectedFile:null,activeSettingsModal:false};
         this.viewPost = React.createRef();
         this.editProfile = React.createRef();
         this.onClickViewPost = this.onClickViewPost.bind(this)
@@ -53,6 +54,7 @@ class Profile extends Component {
 
     handleModalClose=()=>{
         this.setState({ activeCommentWithPictureModal:false})
+        this.setState({ activeSettingsModal:false})
     }
 
     handleEditModalClose = ()=>{
@@ -145,8 +147,12 @@ class Profile extends Component {
       
     }
 
+    handleSettings =()=>{
+        this.setState({activeSettingsModal:"activeSettingsModal"})
+    }
+
     render() {
-        const {Image,userData,liked,userCommentData,tags,username,userDetails,activeCommentWithPictureModal} = this.state
+        const {Image,userData,liked,userCommentData,tags,username,userDetails,activeCommentWithPictureModal,activeSettingsModal} = this.state
        console.log(userData)
 
 
@@ -211,7 +217,7 @@ class Profile extends Component {
                         {userName}
                          {/* <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button>  */}
                          <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button> 
-                         <img src = {image} style = {{maxWidth:26, marginLeft:'10px',marginTop:'30px'}} alt = "..." />
+                         <img src = {image} style = {{maxWidth:26, marginLeft:'10px',marginTop:'30px'}} onClick = {this.handleSettings} alt = "..." />
                         <div class="analysis clearfix">
                             <p class="data posts"><span class="value">{Image.length}</span> posts</p>
                             {followedUsersCount}
@@ -280,6 +286,7 @@ class Profile extends Component {
        
 	</div>
     {activeCommentWithPictureModal==="activeCommentingWithPictureModal"?<CommentWithImage getComments = {this.getComments} id = {this.state.id} handleModalClose = {this.handleModalClose}/>:null}
+    {activeSettingsModal === "activeSettingsModal"?<Settings handleModalClose = {this.handleModalClose}/>:null}
         </div>
          
         );

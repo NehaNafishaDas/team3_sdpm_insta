@@ -17,10 +17,10 @@ function App() {
        <Route path  = "/login" component = {Login}/>
        <Route path  = "/home" component = {Home}/>
        <Route path  = "/profile" component = {Profile}/>
-       <Route path  = "/otherusers" component = {OtherUserProfiles}/>
+       <Route path  = "/otherusers/:username" component = {OtherUserProfiles}/>
        <Route path = "/album" component  = {ViewAlbum} />
        <Route path = "/picture" component  = {ViewPicturesInAlbum} />
-       <Route path = "/commentinfo" component = {CommentInfo} />
+       <Route path = "/commentinfo/:id/:username" component = {CommentInfo} />
        </BrowserRouter>
     </div>
   );

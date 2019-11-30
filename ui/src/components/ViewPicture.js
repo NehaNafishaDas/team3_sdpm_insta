@@ -20,7 +20,7 @@ class ViewPicture extends Component {
     render() {
         return (
             
-            
+           
             <li class="user-post"  style={{backgroundImage : "url('" + this.props.images + "')",backgroundSize : "cover",backgroundPosition : 'center'}}  onClick = {this.onClickViewPost} onMouseOut = {this.onMouseOut} onMouseOver = {this.onMouseHoverView}>
             <div class="post-details">
                 <div class="details clearfix">

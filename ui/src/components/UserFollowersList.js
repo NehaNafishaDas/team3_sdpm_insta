@@ -46,20 +46,29 @@ class UserFollowersList extends Component {
    
     render() {
         const {liked,  activeCommentWithPictureModal} = this.state
+
+        const Tags = this.props.follower.tags ? ( this.props.follower.tags.map(tag =>{    
+            console.log(tag)
+           return( 
+               <p style ={ {paddingBottom:10,paddingLeft:5,paddingRight:5,display: 'inline'}}>#{tag}</p>
+           )
+           }) ): null
+
         const location =  this.props.follower.location ?  <p>{this.props.follower.location}</p>: null
+        console.log(this.props.follower.tags)
         return (
             <li class="post">
             <div class="post-header clearfix">
                 <div class="user-image avatar-def img1"></div>
-                <Link to={{pathname: '/otherusers',state: {username:this.props.follower.username}}} activeClassName="current"><h4 class="username">{this.props.follower.username}</h4></Link>
+                <Link to={{pathname: `/otherusers/${this.props.follower.username}`,state: {username:this.props.follower.username}}} activeClassName="current"><h4 class="username">{this.props.follower.username}</h4></Link>
                 {location}
                 <h4 class="post-time">{this.props.follower.date}</h4>
             </div>
             <div class="post-image"style={{backgroundImage : "url('" +this.props.follower.imageId+ "')",backgroundSize : "cover",backgroundPosition : 'center'}} ></div>
             <h4 class="post-likes">{this.props.follower.likes} likes</h4>
             <p class="post-caption"><span class="username">{this.props.follower.username} </span> {this.props.follower.description}</p>
-            <p style ={ {paddingBottom:6,marginLeft: 25}}>#philly #beards #international #philly #beards #international</p>
-           <Link to = {{pathname:"/commentinfo", state:{id:this.props.follower._id,username:this.props.username}}} > <p style = {{marginLeft: 25, fontSize:15,color:'grey'}}>view all comments</p></Link>
+            <p style ={ {paddingBottom:6,marginLeft: 25}}>{Tags}</p>
+           <Link to = {{pathname:`/commentinfo/${this.props.follower._id}/${this.props.username}`, state:{username:this.props.username}}} > <p style = {{marginLeft: 25, fontSize:15,color:'grey'}}>view all comments</p></Link>
             <ul class="post-comments" style ={{maxHeight: 50, overflow: 'auto'}}>
                <ViewComments  comments = {this.props.follower.comments}/>
             </ul>

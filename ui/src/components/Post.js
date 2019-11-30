@@ -48,6 +48,7 @@ class Post extends Component {
         })
 
         this.setState({description:"",selectedFile:null})
+        this.handleModalClose()
         
     }
 

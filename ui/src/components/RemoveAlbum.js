@@ -11,11 +11,15 @@ class RemoveAlbum extends Component {
         this.getAlbum()
     }
 
-    // onSubmit = ()=>{
-    //     axios.delete(`http://localhost:8081/removeUserFromAlbum?album=${this.state.album}&username=${this.state.followers}`).then(res=>{
-    //         console.log(res)
-    //     })
-    // }
+    onSubmit = (e)=>{
+        e.preventDefault()
+        axios.delete(`http://localhost:8081/removeuserfromalbum?album=${this.state.albumname}&username=${this.state.followers}`).then(res=>{
+            console.log(res)
+        }).catch(error=>{
+            console.log(error)
+        })
+        this.props.handleModalClose()
+    }
 
     onChange = (e)=>{
         this.setState({ [e.target.name] : e.target.value})

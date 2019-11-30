@@ -5,27 +5,36 @@ import ViewPicture from './ViewPicture'
 import LikeIcon from './LikeIcon'
 import Comments from './Comments'
 
+import privateUser from  '../icons/user.svg'
+
+
 class OtherUserProfiles extends Component {
     constructor(props) {
         super(props);
         this.viewPost = React.createRef();
         this.onClickViewPost = this.onClickViewPost.bind(this)
-        this.state = { Image:[] };
-        this.checkLogin()
+        this.state = { Image:[], status:null };
+        
     }
-    componentWillMount(){
+    componentDidMount(){
         this.getAccountProfile()
         this.isFollowing()
+        this.checkLogin()
     }
 
+    
+
+
     getAccountProfile = ()=>{
-        const { username} = this.props.location.state
-      //  if(username = "")
+        const  username = this.props.match.params.username
+        console.log(username)
         axios.get(`http://localhost:8081/getuser?userid=${username}`).then(res=>{
            
             const Images = Object.values(res.data.posts)
             this.setState({Image:Images});
+            console.log(res.data)
             this.setState({userDetails:res.data})
+            this.setState({status:res.data.status})
         })
     }
     
@@ -33,7 +42,6 @@ class OtherUserProfiles extends Component {
         this.viewPost.current.classList.add('view-post-active');
         this.userPostDetails(id)
         this.setState({id:id})
-       // const { username} = this.props.location.state
         axios.get(`http://localhost:8081/isliked?postid=${id}&username=${this.state.loggedInUsername}`).then(res=>{
             this.setState({liked:res.data.liked})
         }).catch(error=>{
@@ -46,6 +54,7 @@ class OtherUserProfiles extends Component {
 
     userPostDetails = (id)=>{
 		axios.get(`http://localhost:8081/getpost?postid=${id}`).then(res=>{
+         
             this.setState({userData:res.data})
 		}).catch(error=>{
 
@@ -97,15 +106,16 @@ class OtherUserProfiles extends Component {
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")
             }
+            const  username = this.props.match.params.username
+            if(res.data.username === username){
+                this.props.history.push("/profile")
+            }
         })
     }
 
     onFollow = (e)=>{
-        e.target.classList.toggle('follow');
-        //e.target.innerHTML.toggle('follow');
-       // e.target.innerHTML  = "following" ?  e.target.innerHTML  = "follow" : e.target.innerHTML  = "following"
-       
-        const { username} = this.props.location.state
+        e.target.classList.toggle('follow');    
+        const  username = this.props.match.params.username
         axios.post(`http://localhost:8081/followtoggle?targetaccount=${username}`).then(res=>{
             console.log(res)
             this.isFollowing()
@@ -115,8 +125,19 @@ class OtherUserProfiles extends Component {
         })
     }
 
+    onBlock = (e) =>{
+        e.target.classList.toggle('follow');
+        const  username = this.props.match.params.username
+        axios.post(`http://localhost:8081/toggleblock?targetaccount=${username}`).then(res=>{
+            console.log(res)
+            this.getAccountProfile()
+        }).catch(error=>{
+            console.log(error)
+        })
+    }
+
     isFollowing=()=>{
-        const { username} = this.props.location.state
+        const  username = this.props.match.params.username
         axios.get(`http://localhost:8081/isfollowing?targetaccount=${username}`).then(res=>{
             this.setState({isfollowing:res.data.isfollowing})
         }).catch(error=>{
@@ -124,24 +145,30 @@ class OtherUserProfiles extends Component {
         })
     }
 
+
+
     render() {
         
-            const {Image,userData,liked,userCommentData,isfollowing,userDetails,loggedInUsername} = this.state
-            console.log(loggedInUsername)
-            console.log(isfollowing)
-            const { username} = this.props.location.state
-           console.log(Image)
-            const ImageList = Image.length ? ( Image.map(image =>{    
+            const {Image,userData,liked,userCommentData,isfollowing,userDetails,loggedInUsername,status} = this.state
+           
+            const  username = this.props.match.params.username
+          
+            
+         
+                const publicProfile =  status === "public" ?( Image.map(image =>{    
                 const id = image._id
                 const likes = image.likes
                 const comments = image.comments.length
                 const images = image.imageId[0].toString()
                 return( 
                           
-                   <ViewPicture images ={images} comment = {comments} likes = {likes} onClickViewPost = {this.onClickViewPost} keyy = {id}/>
+                     <ViewPicture images ={images} status = {status} comment = {comments} likes = {likes} onClickViewPost = {this.onClickViewPost} keyy = {id}/>
                 )
-                }) ): null
-    
+                }) ):null
+
+                const privateProfile =  status === "private" ?<div style = {{paddingTop:'30px'}}><img src = {privateUser} style = {{maxWidth:80,paddingLeft:'475px'}}  alt = "..." /><p class = "private" style = {{paddingLeft:'350px'}}>This Account is Private</p><p class = "private-small" style = {{paddingLeft:'385px',marginTop:'-30px'}}>Follow this user to view their photos</p></div> :null
+                const blocked =  status === "blockedbyyou" ?<div style = {{paddingTop:'30px'}}><img src = {privateUser} style = {{maxWidth:80,paddingLeft:'475px'}}  alt = "..." /><p class = "private" style = {{paddingLeft:'350px'}}>This Account is Blocked</p><p class = "private-small" style = {{paddingLeft:'385px',marginTop:'-30px'}}>Unblock this user to view their photos</p></div> :null
+                const blockedbythem =  status === "blockedbythem" ?<div style = {{paddingTop:'30px'}}><img src = {privateUser} style = {{maxWidth:80,paddingLeft:'520px'}}  alt = "..." /><p class = "private" style = {{paddingLeft:'350px'}}>This Account Has Blocked You</p><p class = "private-small" style = {{paddingLeft:'430px',marginTop:'-30px'}}>You can no longer view their photo</p></div> :null
     
                 const CommentList = userCommentData ? ( userCommentData.map(comment =>{    
                     return( 
@@ -155,9 +182,10 @@ class OtherUserProfiles extends Component {
             const UserLike = userData?<h4 class="post-likes data">{userData.likes} likes</h4>:null
             const datePosted = userData? <h4 class="post-time data">{userData.date}</h4> :null
             const caption = userData? <p class="post-caption"><span class="username">{username} </span>{userData.description}</p>:null
-            const userName  = username ? <h1 class="username">{username}</h1>:null
-            const smallFontUserName  = username ? <h5 class="username">{username}</h5>:null
-            const isFollowing = isfollowing === true ?<button class="def-button edit-profile" onClick={this.onFollow}>Following</button>:<button class="def-button follow" onClick={this.onFollow}>Follow</button>
+            const userName  = username ? <h1 class="username">{username}  </h1>:null
+            const smallFontUserName  = username ? <h5 class="username">{username} </h5>:null
+            const isFollowing = isfollowing === true ?<button class="def-button edit-profile" style = {{marginLeft:'-25px'}} onClick={this.onFollow}>Following</button>:<button class="def-button follow" onClick={this.onFollow}>Follow</button>
+            const isBlocked = status === "blockedbyyou" || status === "blockedbythem" ?  <button class="def-button edit-profile" style = {{marginLeft:'10px'}} onClick={this.onBlock}>Blocked</button> : <button class="def-button follow" style = {{marginLeft:'10px'}} onClick={this.onBlock}>Block User</button>
             const followedUsersCount = userDetails ? <p class="data followers"><span class="value">{userDetails.followercount}</span> followers</p>:null
             const followingUsersCount = userDetails ?  <p class="data following"><span class="value">{userDetails.followingcount}</span> following</p>: null
             const bio = userDetails ? <p class="name">{userDetails.bio}</p> :null
@@ -165,15 +193,20 @@ class OtherUserProfiles extends Component {
             const avatar = userDetails ?  <div class="avatar-display user-image" style={{backgroundImage : "url('" + userDetails.profilepicture + "')",backgroundSize : "cover",backgroundPosition : 'center'}}></div>:null
             return (
             <div class = "container">
-            <NavBar getAccountPicture = {this.getAccountPicture} username = {loggedInUsername}/>
+            <NavBar getAccountProfile = {this.getAccountProfile} username = {loggedInUsername}/>
+           
             <div id="body">
+          
             <div class="user-profile">
                 <div class="profile-brief clearfix">
                     {avatar}
                     <div class="profile-info">
                         {userName}
-                         {/* <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button>  */}
-                       { isFollowing}
+                        
+                       { isFollowing} 
+                      {isBlocked} 
+                       
+                      
                         <div class="analysis clearfix">
                             <p class="data posts"><span class="value">{Image.length}</span> posts</p>
                             {followedUsersCount}
@@ -185,35 +218,39 @@ class OtherUserProfiles extends Component {
                 </div>
             </div>
             <ul class="user-post-list" >
-                {ImageList}
+                {publicProfile}
+                {privateProfile}
+                {blocked}
+                {blockedbythem}
             </ul>
     
-            <div class="view-post" ref = {this.viewPost}>
-                <div class="cancel-icon-white close-view" onClick = {this.handlePostModalClose}></div>
-                
-                <div class="post-view clearfix">
-                            {UserDetail}
-                            <div class="post-view-details">
-                            <div class="header clearfix">
-                                    <div class="avatar-medium user-image"></div>
-                                    {smallFontUserName}
-                                </div>
-                                <div class="post-analysis clearfix">
-                                    {UserLike}
-                                    {datePosted}		
-                                </div>
-                                {caption}
-                                <ul class="post-comments">
-                                    {CommentList}
-                                </ul>
-                                <div class="post-actions clearfix">
-                                {liked === "true"? <LikeIcon onLikePost = {this.onLikePost}/>: <div class="like-icon like-post " onClick = {this.onLikePost}></div>}
-                                <Comments id = {this.state.id} userPostDetails = {this.userPostDetails} onClickViewPost = {this.onClickViewPost} getAccountPicture = {this.getAccountPicture}/>
-                                <i class="fas fa-images add-button"></i>
-                                 </div>
-                            </div>
-                        </div>			
-            </div>
+         
+         <div class="view-post" ref = {this.viewPost}>
+         <div class="cancel-icon-white close-view" onClick = {this.handlePostModalClose}></div>
+         
+         <div class="post-view clearfix">
+                     {UserDetail}
+                     <div class="post-view-details">
+                     <div class="header clearfix">
+                             <div class="avatar-medium user-image"></div>
+                             {smallFontUserName}
+                         </div>
+                         <div class="post-analysis clearfix">
+                             {UserLike}
+                             {datePosted}		
+                         </div>
+                         {caption}
+                         <ul class="post-comments">
+                             {CommentList}
+                         </ul>
+                         <div class="post-actions clearfix">
+                         {liked === "true"? <LikeIcon onLikePost = {this.onLikePost}/>: <div class="like-icon like-post " onClick = {this.onLikePost}></div>}
+                         <Comments id = {this.state.id} userPostDetails = {this.userPostDetails} onClickViewPost = {this.onClickViewPost} getAccountPicture = {this.getAccountPicture}/>
+                         <i class="fas fa-images add-button"></i>
+                          </div>
+                     </div>
+                 </div>			
+     </div>
             
             
            
