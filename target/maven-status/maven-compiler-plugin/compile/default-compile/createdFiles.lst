@@ -3,12 +3,10 @@ com\InstagramClone\ImageService\DatabaseController.class
 com\InstagramClone\model\Comment.class
 com\InstagramClone\ImageService\CorsFilter.class
 com\InstagramClone\ImageService\SwaggerConfig.class
-com\InstagramClone\model\BlockedUser.class
 com\InstagramClone\ImageService\WebController.class
-com\InstagramClone\model\Privacy.class
 com\InstagramClone\ImageService\WebConfig.class
 com\InstagramClone\ImageService\ImageServiceApplication.class
+com\InstagramClone\ImageService\AccountController$2.class
 com\InstagramClone\model\Account.class
-com\InstagramClone\model\Image.class
 com\InstagramClone\ImageService\AccountController.class
 com\InstagramClone\model\Post.class

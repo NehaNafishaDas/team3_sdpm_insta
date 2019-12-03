@@ -1,9 +1,7 @@
 package com.InstagramClone.ImageService;
 
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 
 import com.InstagramClone.model.Account;
 import com.InstagramClone.model.Comment;
@@ -13,18 +11,15 @@ import com.cloudinary.utils.ObjectUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mongodb.client.model.geojson.Position;
 import org.bson.types.ObjectId;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.InstagramClone.model.Image;
 import org.springframework.web.server.ResponseStatusException;
+import com.mongodb.client.model.geojson.Point;
 
-import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
 
 @RestController
@@ -35,24 +30,6 @@ public class ImageController {
             "cloud_name", "dongodxek",
             "api_key", "473417739651645",
             "api_secret", "C6P529y3ejZcBSeVyqh-4Opeo1w"));
-
-
-//    @GetMapping("/image/{id:.+}")
-//    public @ResponseBody ResponseEntity<byte[]> getImage(@PathVariable String id) {
-//        final HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.IMAGE_PNG);
-//        ObjectId imageid;
-//        try {
-//            imageid = new ObjectId(id);
-//        } catch (IllegalArgumentException e) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid id");
-//        }
-//        Image i = db.getImage(imageid.toHexString());
-//        if(i == null) {
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "image not found");
-//        }
-//        return new ResponseEntity<>(i.getImageFile(), headers, HttpStatus.CREATED);
-//    }
 
     @PostMapping(value = "/imageupload", produces = "application/json")
     public @ResponseBody String uploadImage(@RequestBody MultipartFile file,
@@ -72,9 +49,12 @@ public class ImageController {
 
     @PostMapping(value = "/imagepost", produces = "application/json")
     public @ResponseBody String imagePost(@RequestParam("images") MultipartFile images,
-                                            @RequestParam(required = false) String description,
-                                            @RequestParam(required = false) String location,
-                                            HttpSession session) throws IOException {
+                                          @RequestParam(required = false) String description,
+                                          @RequestParam(required = false) String location,
+                                          @RequestParam(required = false) String tags,
+                                          @RequestParam(required = false) String slongitude,
+                                          @RequestParam(required = false) String slatitude,
+                                          HttpSession session) throws IOException {
         String username = (String) session.getAttribute("username");
         if(username == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
@@ -83,16 +63,106 @@ public class ImageController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "could not accept file");
         }
         Account a = db.getAccount(username);
-        Map uploadResult = cloudinary.uploader().upload(images.getBytes(), ObjectUtils.emptyMap());
+        Map params = ObjectUtils.asMap("phash", "true",
+                                                "image_metadata", "true");
+        Map uploadResult = cloudinary.uploader().upload(images.getBytes(), params);
         ArrayList<String> imageList = new ArrayList<>();
         imageList.add((String)uploadResult.get("url"));
+        HashMap<String, String> x = (HashMap<String, String>) uploadResult.get("image_metadata");
+
+        String longitudeString = x.get("GPSLongitude");
+        String latitudeString = x.get("GPSLatitude");
+
+
+        String phash = (String)uploadResult.get("phash");
         Post p = new Post(imageList, a._id, a.getUsername(), description);
-        if(location != null) p.setLocation(location);
+        if(slongitude != null && slatitude != null) {
+            p.setLocation(location);
+            p.setGps(new Point(new Position(Double.parseDouble(slongitude),
+                    Double.parseDouble(slatitude))));
+        } else if(longitudeString != null && latitudeString != null) {
+            Double longitude = locationConvert(longitudeString);
+            Double latitude = locationConvert(latitudeString);
+            System.out.println("Long: "+ longitude + " Lat: " + latitude);
+            Point gps = new Point(new Position(longitude, latitude));
+            p.setGps(gps);
+        }
+
+        if(phash != null) p.setPhash(phash);
+        if(tags != null) {
+            String[] split = tags.split("\\s*,\\s*");
+            ArrayList<String> tagsArray = new ArrayList<>(Arrays.asList(split));
+            p.setTags(tagsArray);
+        }
         db.insertPost(p);
         ObjectNode response = om.createObjectNode();
         response.put("status", "success");
         response.put("url", (String)uploadResult.get("url"));
         return om.writeValueAsString(response);
+    }
+
+    public Double locationConvert(String loc) {
+        loc = loc.replaceAll("[A-Za-z'\\\"]", "");
+        StringTokenizer st = new StringTokenizer(loc);
+        int count = 0;
+        Double result = 0.0d;
+        while(st.hasMoreTokens()){
+            Double lo;
+            try{
+                lo = Double.parseDouble(st.nextToken());
+                count++;
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            if(count == 1) {
+                result += lo;
+            } else if(count == 2) {
+                result += lo / 60.0f;
+            } else if(count == 3) {
+                result += lo / 3600.0f;
+            }
+        }
+        return result;
+    }
+
+    @PostMapping(value = "/imagesearch", produces = "application/json")
+    public @ResponseBody String imageSearch(@RequestParam MultipartFile image,
+                                            HttpSession session) throws Exception {
+        String username = (String) session.getAttribute("username");
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        if(image.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "could not accept file");
+        }
+        Account a = db.getAccount(username);
+        Map params = ObjectUtils.asMap("phash", "true");
+        Map uploadResult = cloudinary.uploader().upload(image.getBytes(), params);
+        String phash = (String)uploadResult.get("phash");
+        String id = (String)uploadResult.get("public_id");
+        cloudinary.api().deleteResources(Arrays.asList(id), null);
+        ObjectNode response = om.createObjectNode();
+        response.putPOJO("post", db.imageSearch(phash));
+        return om.writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/duplicateimagesearch", produces = "application/json")
+    public @ResponseBody ArrayList<Post> duplicateImageSearch(@RequestParam MultipartFile image,
+                                            HttpSession session) throws Exception {
+        String username = (String) session.getAttribute("username");
+        if(username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        if(image.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "could not accept file");
+        }
+        Account a = db.getAccount(username);
+        Map params = ObjectUtils.asMap("phash", "true");
+        Map uploadResult = cloudinary.uploader().upload(image.getBytes(), params);
+        String phash = (String)uploadResult.get("phash");
+        String id = (String)uploadResult.get("public_id");
+        cloudinary.api().deleteResources(Arrays.asList(id), null);
+        return db.duplicateImageSearch(phash);
     }
 
     @PostMapping(value = "/likepost", produces = "application/json")
@@ -151,6 +221,35 @@ public class ImageController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "already unliked");
             }
         }
+    }
+
+    @GetMapping(value = "/imagemap", produces = "application/json")
+    public @ResponseBody String imageMap(@RequestParam String username,
+                                         HttpSession session) throws JsonProcessingException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if(loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account a = db.getAccount(username);
+        if(a == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
+        }
+        ArrayList<ObjectId> posts = a.getPosts();
+        String url = "https://image.maps.api.here.com/mia/1.6/mapview?app_id=1blySexZd7OY515FRAlM&app_code=y8TY2X31NxrTG8yqWloxJg&w=1000&h=600&poi=";
+        for (ObjectId postid : posts) {
+            Post p = db.getPost(postid);
+            Point gps = p.getGps();
+            if(gps != null) {
+                url += gps.getPosition().getValues().get(1) + "," +
+                        gps.getPosition().getValues().get(0) + ",";
+            }
+        }
+        if(url.endsWith(",")) {
+            url = url.substring(0, url.length()-1);
+        }
+        ObjectNode response = om.createObjectNode();
+        response.put("url", url);
+        return om.writeValueAsString(response);
     }
 
     @PostMapping(value = "/liketoggle", produces = "application/json")

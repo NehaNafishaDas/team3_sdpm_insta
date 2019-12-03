@@ -1,7 +1,7 @@
 package com.InstagramClone.ImageService;
 
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Projections.include;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
@@ -11,18 +11,18 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
 import com.InstagramClone.model.*;
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Indexes;
-import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.UpdateResult;
-import org.bson.Document;
-import org.bson.codecs.configuration.CodecProvider;
+import com.mongodb.client.model.*;
+import com.mongodb.client.model.geojson.Point;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
@@ -36,7 +36,7 @@ public class DatabaseController {
 	
 	private MongoClient mongoClient;
 	private MongoDatabase database;
-	private MongoCollection<Image> imageDb;
+//	private MongoCollection<Image> imageDb;
 	private MongoCollection<Post> postDb;
 	private MongoCollection<Account> accountDb;
 	private MongoCollection<Album> albumDb;
@@ -62,17 +62,18 @@ public class DatabaseController {
 				fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 		database = mongoClient.getDatabase("db");
 	    database = database.withCodecRegistry(pojoCodecRegistry);
-	    imageDb = database.getCollection("Images", Image.class);
+//	    imageDb = database.getCollection("Images", Image.class);
 	    postDb = database.getCollection("Posts", Post.class);
 	    postDb.createIndex(Indexes.text("description"));
+	    postDb.createIndex(Indexes.geo2dsphere("gps"));
 	    accountDb = database.getCollection("Accounts", Account.class);
 		albumDb = database.getCollection("Albums", Album.class);
 	}
 
-	// Return image object given an objectid as a string
-	public Image getImage(String id) {
-		return imageDb.find(eq("_id", new ObjectId(id))).first();
-	}
+//	// Return image object given an objectid as a string
+//	public Image getImage(String id) {
+//		return imageDb.find(eq("_id", new ObjectId(id))).first();
+//	}
 	
 	// Create an account from a given account object
 	public String createAccount(Account account) throws NoSuchAlgorithmException {
@@ -149,6 +150,7 @@ public class DatabaseController {
 		while(iterator.hasNext()) {
 			Account a = iterator.next();
 			list.add(a.getUsername());
+			list.add(a.getProfilepicture());
 		}
 		return list;
 	}
@@ -162,14 +164,84 @@ public class DatabaseController {
 		return postDb.find(eq("_id", id)).first();
 	}
 
-	public ArrayList<Post> getPost(String description){
+	public ArrayList<Post> getPost(String username, String description){
 		FindIterable<Post> posts  = postDb.find(Filters.text(description));
 		MongoCursor<Post> iterator = posts.iterator();
 		ArrayList<Post> response = new ArrayList<>();
 		while(iterator.hasNext()) {
 			response.add(iterator.next());
 		}
-		return response;
+		return filterPosts(response, username);
+	}
+
+	public ArrayList<Post> searchTag(String username, String tag){
+		MongoCursor<Post> iterator = postDb.find(eq("tags", tag)).iterator();
+		ArrayList<Post> list = new ArrayList<>();
+		while(iterator.hasNext()) {
+			Post a = iterator.next();
+			list.add(a);
+		}
+		return filterPosts(list, username);
+	}
+
+	public ArrayList<Post> searchLocation(String username, double longitude, double latitude) {
+		BasicDBObject query = new BasicDBObject("gps",
+				new BasicDBObject ("$near", new BasicDBObject("type","Point")
+						.append("coordinates",new double[] {longitude,latitude}) ) );
+		FindIterable<Post> results = postDb.find(query);
+		MongoCursor<Post> iterator = results.iterator();
+		ArrayList<Post> r = new ArrayList<>();
+		while(iterator.hasNext()) {
+			r.add(iterator.next());
+		}
+		return filterPosts(r, username);
+	}
+
+	public ArrayList<Post> filterPosts(ArrayList<Post> posts, String username) {
+		Account a = getAccount(username);
+		ArrayList<Post> result = new ArrayList<>();
+		for (Post p : posts) {
+			Account currentAccount = getAccount(p.getUsername());
+			result.add(p);
+
+			if(username.equals(p.getUsername())) {
+				result.add(p);
+			} else if(!currentAccount.isPrivate()) {
+				result.add(p);
+			} else if(currentAccount.isPrivate() && currentAccount.getFollowedUsers()
+					.contains(a._id)) {
+				result.add(p);
+			}
+		}
+		return result;
+	}
+
+	public ArrayList<TagResult> getTags(String tag){
+		Pattern regex = Pattern.compile(tag, Pattern.CASE_INSENSITIVE);
+		Bson filter = Filters.eq("tags", regex);
+		MongoCursor<Post> iterator = postDb.find(filter).iterator();
+		ArrayList<TagResult> tagList = new ArrayList<>();
+		while(iterator.hasNext()) {
+			Post a = iterator.next();
+			for (String s : a.getTags()) {
+				if(regex.matcher(s).find()) {
+					tagList.add(new TagResult(s, a._id.toHexString(), a.getUsername()));
+				}
+			}
+		}
+		tagList.sort(new MyComparator(tag));
+		return tagList;
+	}
+
+	public class TagResult {
+		public String tag;
+		public String _id;
+		public String username;
+		public TagResult (String tag, String _id, String username) {
+			this.tag = tag;
+			this._id = _id;
+			this.username = username;
+		}
 	}
 
 	public boolean getPrivacy(String username) {
@@ -305,6 +377,78 @@ public class DatabaseController {
     
     public void removeFromBlockedList(ObjectId currentUser, ObjectId targetUser) {
 		accountDb.updateOne(eq("_id", currentUser), Updates.pull("blockedUsers", targetUser));
+	}
+
+	public ArrayList<Post> duplicateImageSearch(String phash) {
+        FindIterable<Post> postsResult = postDb.find(eq("phash", phash));
+        ArrayList<Post> posts = new ArrayList<>();
+        for (Post p : postsResult) {
+            posts.add(p);
+        }
+        return posts;
+    }
+
+    public ArrayList<Post> imageSearch(String phash) throws DecoderException {
+        FindIterable<Post> postsResult = postDb.find(exists("phash"));
+        ArrayList<Post> posts = new ArrayList<>();
+        for (Post p : postsResult) {
+            byte[] xor = xorHex(phash, p.getPhash());
+            int score = 0;
+            for (byte b : xor) {
+                score += Integer.bitCount(b);
+            }
+            float phashScore = (float) (1.0 - (score / 64.0));
+            if(phashScore >= 0.6) {
+                posts.add(p);
+            }
+        }
+        return posts;
+    }
+
+    public byte[] xorHex(String a, String b) throws DecoderException {
+        char[] chars = new char[a.length()];
+        for (int i = 0; i < chars.length; i++) {
+            chars[i] = toHex(fromHex(a.charAt(i)) ^ fromHex(b.charAt(i)));
+        }
+        return Hex.decodeHex(chars);
+    }
+
+    private static int fromHex(char c) {
+        if (c >= '0' && c <= '9') {
+            return c - '0';
+        }
+        if (c >= 'A' && c <= 'F') {
+            return c - 'A' + 10;
+        }
+        if (c >= 'a' && c <= 'f') {
+            return c - 'a' + 10;
+        }
+        throw new IllegalArgumentException();
+    }
+
+    private char toHex(int n) {
+        if (n < 0 || n > 15) {
+            throw new IllegalArgumentException();
+        }
+        return "0123456789ABCDEF".charAt(n);
+    }
+
+	class MyComparator implements Comparator<TagResult> {
+
+		private final String keyWord;
+
+		MyComparator(String keyWord) {
+			this.keyWord = keyWord;
+		}
+
+		@Override
+		public int compare(TagResult tagResult, TagResult t1) {
+			if(tagResult.tag.startsWith(keyWord)) {
+				return t1.tag.startsWith(keyWord)? tagResult.tag.compareTo(t1.tag): -1;
+			} else {
+				return t1.tag.startsWith(keyWord)? 1: tagResult.tag.compareTo(t1.tag);
+			}
+		}
 	}
 
 }

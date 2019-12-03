@@ -5,17 +5,22 @@ import java.util.Date;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.mongodb.client.model.geojson.Point;
 import org.bson.types.ObjectId;
 
 public class Post implements Comparable<Post> {
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ObjectId _id;
 	public ArrayList<String> imageId;
+	public String phash;
+	public boolean forSale;
+	public float price;
 	@JsonSerialize(using = ToStringSerializer.class)
 	public ObjectId account;
 	public String username;
 	public String description;
 	public String location;
+	public Point gps;
 	public int likes;
 	public ArrayList<String> tags;
 	@JsonSerialize(using = ToStringSerializer.class)
@@ -25,6 +30,9 @@ public class Post implements Comparable<Post> {
     public Post(ArrayList<String> images, ObjectId account, String username , String description) {
     	this.set_id(new ObjectId());
     	this.imageId = images;
+    	this.phash = "";
+    	this.forSale = false;
+    	this.price = 0.00f;
     	this.account = account;
     	this.username = username;
     	if(description != null) this.description = description;
@@ -53,6 +61,30 @@ public class Post implements Comparable<Post> {
 
 	public void setImageId(ArrayList<String> imageId) {
 		this.imageId = imageId;
+	}
+
+    public String getPhash() {
+        return phash;
+    }
+
+    public void setPhash(String phash) {
+        this.phash = phash;
+    }
+
+	public boolean isForSale() {
+		return forSale;
+	}
+
+	public void setForSale(boolean forSale) {
+		this.forSale = forSale;
+	}
+
+	public float getPrice() {
+		return price;
+	}
+
+	public void setPrice(float price) {
+		this.price = price;
 	}
 
 	public ObjectId getAccount() {
@@ -85,6 +117,14 @@ public class Post implements Comparable<Post> {
 
 	public void setLocation(String location) {
 		this.location = location;
+	}
+
+	public Point getGps() {
+		return gps;
+	}
+
+	public void setGps(Point gps) {
+		this.gps = gps;
 	}
 
 	public int getLikes() {

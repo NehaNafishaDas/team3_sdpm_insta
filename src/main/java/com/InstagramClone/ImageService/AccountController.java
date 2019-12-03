@@ -7,6 +7,7 @@ import java.util.*;
 import javax.servlet.http.HttpSession;
 
 import com.InstagramClone.model.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -158,11 +159,52 @@ public class AccountController {
     String setPrivate(@RequestParam boolean privacy, HttpSession session) throws NoSuchAlgorithmException, JsonProcessingException {
         String currentUser = (String) session.getAttribute("username");
         Account currentAccount = db.getAccount(currentUser);
+        if(currentAccount == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "account error");
         db.changePrivacy(currentAccount._id, privacy);
         ObjectNode response = om.createObjectNode();
         response.put("status", "User privacy is set to " + privacy);
         return om.writeValueAsString(response);
     }
+
+    @PostMapping(value = "/toggleprivacy", produces = "application/json")
+    public @ResponseBody
+    String togglePrivacy(HttpSession session) throws JsonProcessingException {
+        String currentUser = (String) session.getAttribute("username");
+        Account currentAccount = db.getAccount(currentUser);
+        if(currentAccount == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "account error");
+        if(currentAccount.isPrivate()) {
+            db.changePrivacy(currentAccount._id, false);
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "User privacy is set to false");
+            return om.writeValueAsString(response);
+        } else {
+            db.changePrivacy(currentAccount._id, true);
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "User privacy is set to true");
+            return om.writeValueAsString(response);
+        }
+    }
+
+    @GetMapping(value = "/isprivate", produces = "application/json")
+    public @ResponseBody
+    String isPrivate(HttpSession session) throws JsonProcessingException {
+        String currentUser = (String) session.getAttribute("username");
+        Account currentAccount = db.getAccount(currentUser);
+        if(currentAccount == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "account error");
+        if(currentAccount.isPrivate()) {
+            ObjectNode response = om.createObjectNode();
+            response.put("isprivate", "true");
+            return om.writeValueAsString(response);
+        } else {
+            ObjectNode response = om.createObjectNode();
+            response.put("status", "false");
+            return om.writeValueAsString(response);
+        }
+    }
+
 
     @PostMapping(value = "/unblockuser", produces = "application/json")
     public @ResponseBody
@@ -553,9 +595,9 @@ public class AccountController {
     }
 
     @GetMapping(value = "/feed", produces = "application/json")
-    public @ResponseBody ArrayList<Post> feed(HttpSession session) {
+    public @ResponseBody ArrayList<Post> feed(@RequestParam(required = false) String sort,
+                                              HttpSession session) {
         String username = (String) session.getAttribute("username");
-        String userid = (String) session.getAttribute("userid");
         if (username == null)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
         Account account = db.getAccount(username);
@@ -587,7 +629,33 @@ public class AccountController {
                 allPosts.add(db.getPost(currentPost));
             }
         }
-        Collections.sort(allPosts, Collections.reverseOrder());
+        if(sort != null) {
+            if (sort.equals("likesdescending")) {
+                allPosts.sort(new Comparator<Post>() {
+                    @Override
+                    public int compare(Post post, Post t1) {
+                        if (post.getLikes() > t1.getLikes()) {
+                            return -1;
+                        } else {
+                            return 1;
+                        }
+                    }
+                });
+            } else if (sort.equals("likesascending")) {
+                allPosts.sort(new Comparator<Post>() {
+                    @Override
+                    public int compare(Post post, Post t1) {
+                        if (post.getLikes() > t1.getLikes()) {
+                            return -1;
+                        } else {
+                            return 1;
+                        }
+                    }
+                });
+            }
+        } else {
+            Collections.sort(allPosts, Collections.reverseOrder());
+        }
         return allPosts;
     }
 
@@ -773,37 +841,93 @@ public class AccountController {
     }
 
     @GetMapping(value = "/searchusername", produces = "application/json")
-    public ArrayList<String> searchUser(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
+    public @ResponseBody ArrayList<String> searchUser(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
         return db.searchUsername(query);
     }
 
     @GetMapping(value = "/searchimagedesc", produces = "application/json")
-    public String searchImageDesc(@RequestParam String description, HttpSession session) throws NoSuchAlgorithmException, IOException {
-       ArrayList<Post> post = db.getPost(description);
-       ArrayList<Post> allPost = new ArrayList<>();
-       ObjectNode response = om.createObjectNode();
-       //Privacy privacy;
-       //BlockedUser blockedUser;
-       for(Post p : post) {
-           // TODO Reimplement privacy
-           //privacy = db.getPrivacy(p.getUsername());
-           //blockedUser = db.getBlockList(p.getUsername());
-           //List<String> blockedList=blockedUser.getBlockedUsers();
+    public @ResponseBody ArrayList<Post> searchImageDesc(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        return db.getPost(query, loggedInAs);
+    }
+//
+//    @GetMapping(value = "/getimagesforsale", produces = "application/json")
+//    public @ResponseBody ArrayList<Post> getimagesforsale(HttpSession session) throws NoSuchAlgorithmException, IOException {
+//        String loggedInAs = (String) session.getAttribute("username");
+//        if (loggedInAs == null) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+//        }
+//        Account a = db.getAccount(loggedInAs);
+//        ArrayList<Post> p = a.getPosts();
+//        for (Post post : p) {
+//
+//        }
+//        return db.getPost(query, loggedInAs);
+//    }
 
-           //if (!(privacy.isPrivate) && !(blockedList.contains(session.getAttribute("username"))))
-               allPost.add(p);
-       }
-       response.putPOJO("posts", allPost);
-       return om.writeValueAsString(response);
+    @GetMapping(value = "/searchtag", produces = "application/json")
+    public @ResponseBody ArrayList<Post> searchByTag(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        return db.searchTag(query, loggedInAs);
+    }
+
+    @GetMapping(value = "/searchlocation", produces = "application/json")
+    public @ResponseBody ArrayList<Post> searchLocation(@RequestParam String longitude,
+                                                        @RequestParam String latitude,
+                                                        HttpSession session) {
+        String loggedInAs = (String) session.getAttribute("username");
+        if(loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account a = db.getAccount(loggedInAs);
+        if(a == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
+        }
+        ArrayList<Post> posts = db.searchLocation(loggedInAs,
+                Double.parseDouble(longitude),
+                Double.parseDouble(latitude));
+        return posts;
     }
 
     @GetMapping(value = "/search", produces = "application/json")
-    public String search(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
+    public @ResponseBody String search(@RequestParam String query, HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        if(query == null || query.length() == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "search is empty");
+        }
         ObjectNode response = om.createObjectNode();
         ArrayList<String> usernames = db.searchUsername(query);
-        response.putPOJO("username", usernames);
-        ArrayList<Post> posts = db.getPost(query);
+        Iterator<String> itr = usernames.iterator();
+        ArrayNode usernameArray = response.putArray("username");
+        while(itr.hasNext()){
+            ObjectNode node = usernameArray.addObject();
+            node.put("name", itr.next());
+            node.put("profilepicture", itr.next());
+        }
+        ArrayList<Post> posts = db.getPost(query, loggedInAs);
         response.putPOJO("description", posts);
+        ArrayList<DatabaseController.TagResult> tagPosts = db.getTags(query);
+        ArrayNode tagArray = response.putArray("tag");
+        Iterator<DatabaseController.TagResult> itr2 = tagPosts.iterator();
+        while(itr2.hasNext()) {
+            DatabaseController.TagResult next = itr2.next();
+            ObjectNode node = tagArray.addObject();
+            node.put("tag", next.tag);
+            node.put("id", next._id);
+            node.put("username", next.username);
+        }
+        //response.putPOJO("tag", tagPosts);
         return om.writeValueAsString(response);
     }
+
+
 }
