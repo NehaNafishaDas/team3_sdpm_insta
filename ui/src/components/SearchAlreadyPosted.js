@@ -16,13 +16,13 @@ class SearchAlreadyPosted extends Component {
         e.preventDefault()
         var data = new FormData()
         data.append("image",this.state.selectedFile)
-        axios.post('http://localhost:8081/imagesearch',data,{
+        axios.post('http://localhost:8081/duplicateimagesearch',data,{
             headers:{
                 'Content-Type':'multipart/form-data'
             }
         }).then(res=>{
             console.log(res)
-                this.setState({data:res.data.post,activeViewSimilarImages:"activeViewSimilarImages"})
+                this.setState({data:res.data,activeViewSimilarImages:"activeViewSimilarImages"})
         }).catch(error=>{
 
         })

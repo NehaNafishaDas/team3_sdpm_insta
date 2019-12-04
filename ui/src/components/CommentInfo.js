@@ -86,8 +86,8 @@ class CommentInfo extends Component {
 
 
     render() {
-        const {userData,liked,userCommentData,tags,username,activeCommentWithPictureModal} = this.state
-
+        const {userData,liked,userCommentData,tags,activeCommentWithPictureModal} = this.state
+        const username = this.props.match.params.username
         const CommentList = userCommentData ? ( userCommentData.map(comment =>{  
             if(comment.comment !== "" )    
             return( 
