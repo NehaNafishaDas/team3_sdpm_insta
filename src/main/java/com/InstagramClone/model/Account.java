@@ -119,7 +119,7 @@ public class Account {
 		return isPrivate;
 	}
 
-	public void setPrivate(boolean aPrivate) {
+	public void setIsPrivate(boolean aPrivate) {
 		isPrivate = aPrivate;
 	}
 

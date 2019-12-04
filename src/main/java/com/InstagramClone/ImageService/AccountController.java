@@ -652,6 +652,10 @@ public class AccountController {
                         }
                     }
                 });
+            } else if (sort.equals("dateascending")) {
+                Collections.sort(allPosts, Collections.reverseOrder());
+            } else if (sort.equals("datedescending")) {
+                Collections.sort(allPosts);
             }
         } else {
             Collections.sort(allPosts, Collections.reverseOrder());
@@ -853,20 +857,44 @@ public class AccountController {
         }
         return db.getPost(query, loggedInAs);
     }
-//
-//    @GetMapping(value = "/getimagesforsale", produces = "application/json")
-//    public @ResponseBody ArrayList<Post> getimagesforsale(HttpSession session) throws NoSuchAlgorithmException, IOException {
-//        String loggedInAs = (String) session.getAttribute("username");
-//        if (loggedInAs == null) {
-//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
-//        }
-//        Account a = db.getAccount(loggedInAs);
-//        ArrayList<Post> p = a.getPosts();
-//        for (Post post : p) {
-//
-//        }
-//        return db.getPost(query, loggedInAs);
-//    }
+
+    @GetMapping(value = "/getimagesforsale", produces = "application/json")
+    public @ResponseBody String getimagesforsale(HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account a = db.getAccount(loggedInAs);
+        ObjectNode response = om.createObjectNode();
+        ArrayList<ObjectId> postIdList = a.getPosts();
+        int count = 0;
+        for (ObjectId postId : postIdList) {
+            Post post = db.getPost(postId);
+            ObjectNode node = response.putObject(String.valueOf(count));
+            count++;
+            node.put("id", post.get_id().toHexString());
+            node.put("url", post.getImageId().get(0));
+            node.put("description", post.getDescription());
+            node.put("price", post.getPrice());
+        }
+        return om.writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/setprice", produces = "application/json")
+    public @ResponseBody String setprice(@RequestParam String id,
+                                         @RequestParam String price,
+                                         HttpSession session) throws IOException {
+        String loggedInAs = (String) session.getAttribute("username");
+        if (loggedInAs == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "not logged in");
+        }
+        Account a = db.getAccount(loggedInAs);
+        Post p = db.getPost(new ObjectId(id));
+        ObjectNode response = om.createObjectNode();
+        response.put("status", "success");
+        response.put("price", "success");
+        return om.writeValueAsString(response);
+    }
 
     @GetMapping(value = "/searchtag", produces = "application/json")
     public @ResponseBody ArrayList<Post> searchByTag(@RequestParam String query, HttpSession session) throws NoSuchAlgorithmException, IOException {
@@ -877,7 +905,7 @@ public class AccountController {
         return db.searchTag(query, loggedInAs);
     }
 
-    @GetMapping(value = "/searchlocation", produces = "application/json")
+    @PostMapping(value = "/searchlocation", produces = "application/json")
     public @ResponseBody ArrayList<Post> searchLocation(@RequestParam String longitude,
                                                         @RequestParam String latitude,
                                                         HttpSession session) {

@@ -142,7 +142,7 @@ public class ImageController {
         String id = (String)uploadResult.get("public_id");
         cloudinary.api().deleteResources(Arrays.asList(id), null);
         ObjectNode response = om.createObjectNode();
-        response.putPOJO("post", db.imageSearch(phash));
+        response.putPOJO("post", db.imageSearch(phash, username));
         return om.writeValueAsString(response);
     }
 
@@ -162,7 +162,7 @@ public class ImageController {
         String phash = (String)uploadResult.get("phash");
         String id = (String)uploadResult.get("public_id");
         cloudinary.api().deleteResources(Arrays.asList(id), null);
-        return db.duplicateImageSearch(phash);
+        return db.duplicateImageSearch(phash, username);
     }
 
     @PostMapping(value = "/likepost", produces = "application/json")
@@ -235,7 +235,7 @@ public class ImageController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid account");
         }
         ArrayList<ObjectId> posts = a.getPosts();
-        String url = "https://image.maps.api.here.com/mia/1.6/mapview?app_id=1blySexZd7OY515FRAlM&app_code=y8TY2X31NxrTG8yqWloxJg&w=1000&h=600&poi=";
+        String url = "https://image.maps.api.here.com/mia/1.6/mapview?app_id=1blySexZd7OY515FRAlM&app_code=y8TY2X31NxrTG8yqWloxJg&w=1000&h=600&poithm=1&poitxs=16&poi=";
         for (ObjectId postid : posts) {
             Post p = db.getPost(postid);
             Point gps = p.getGps();

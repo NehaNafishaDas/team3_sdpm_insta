@@ -187,8 +187,11 @@ public class DatabaseController {
 	public ArrayList<Post> searchLocation(String username, double longitude, double latitude) {
 		BasicDBObject query = new BasicDBObject("gps",
 				new BasicDBObject ("$near", new BasicDBObject("type","Point")
-						.append("coordinates",new double[] {longitude,latitude}) ) );
-		FindIterable<Post> results = postDb.find(query);
+						.append("coordinates",new double[] {longitude,latitude}))
+						.append("maxDistance", 250));
+		FindIterable<Post> results = postDb.find(
+				Filters.nearSphere("gps", longitude, latitude, 100000.0d, 0.0d))
+				.limit(10);
 		MongoCursor<Post> iterator = results.iterator();
 		ArrayList<Post> r = new ArrayList<>();
 		while(iterator.hasNext()) {
@@ -202,8 +205,6 @@ public class DatabaseController {
 		ArrayList<Post> result = new ArrayList<>();
 		for (Post p : posts) {
 			Account currentAccount = getAccount(p.getUsername());
-			result.add(p);
-
 			if(username.equals(p.getUsername())) {
 				result.add(p);
 			} else if(!currentAccount.isPrivate()) {
@@ -379,16 +380,16 @@ public class DatabaseController {
 		accountDb.updateOne(eq("_id", currentUser), Updates.pull("blockedUsers", targetUser));
 	}
 
-	public ArrayList<Post> duplicateImageSearch(String phash) {
+	public ArrayList<Post> duplicateImageSearch(String phash, String username) {
         FindIterable<Post> postsResult = postDb.find(eq("phash", phash));
         ArrayList<Post> posts = new ArrayList<>();
         for (Post p : postsResult) {
             posts.add(p);
         }
-        return posts;
+        return filterPosts(posts, username);
     }
 
-    public ArrayList<Post> imageSearch(String phash) throws DecoderException {
+    public ArrayList<Post> imageSearch(String phash, String username) throws DecoderException {
         FindIterable<Post> postsResult = postDb.find(exists("phash"));
         ArrayList<Post> posts = new ArrayList<>();
         for (Post p : postsResult) {
@@ -398,11 +399,12 @@ public class DatabaseController {
                 score += Integer.bitCount(b);
             }
             float phashScore = (float) (1.0 - (score / 64.0));
-            if(phashScore >= 0.6) {
+            if(phashScore >= 0.55) {
+            	System.out.println("DING!");
                 posts.add(p);
             }
         }
-        return posts;
+        return filterPosts(posts, username);
     }
 
     public byte[] xorHex(String a, String b) throws DecoderException {
