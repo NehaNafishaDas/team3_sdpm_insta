@@ -292,11 +292,11 @@ class Profile extends Component {
 					<h2 class="username">{this.state.username}</h2>
 				</div>
 				<label for="name">First Name</label>
-				<input type="text" name="firstName" class="name text-field" onChange = {this.onChange} placeholder="muiz"/>
+				<input type="text" name="firstName" class="name text-field" onChange = {this.onChange} placeholder="First Name"/>
                 <label for="name">Last Name</label>
-				<input type="text" name="lastName" class="name text-field" onChange = {this.onChange}  placeholder="muiz"/>
+				<input type="text" name="lastName" class="name text-field" onChange = {this.onChange}  placeholder="last Name"/>
 				<label for="bio">Bio</label>
-				<textarea class="text-field bio" name = "bio" onChange = {this.onChange} placeholder="Design, Code, Art"></textarea>
+				<textarea class="text-field bio" name = "bio" onChange = {this.onChange} placeholder="bio"></textarea>
                 <label for="username"> Profile Photo</label>
                 <input type="file" class="name text-field" name = "profilepicture" id="files" onChange = {this.onUpload}/>
                 {/* <label for="username"> Email</label>

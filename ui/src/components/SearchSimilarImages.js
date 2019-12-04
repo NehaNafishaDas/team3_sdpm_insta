@@ -5,7 +5,7 @@ import {Redirect} from 'react-router-dom'
 class SearchSimilarImages extends Component {
     constructor(props) {
         super(props);
-        this.state = {  };
+        this.state = {activeViewSimilarImages:false  };
     }
     onUpload = (e)=>{
         this.setState({selectedFile:e.target.files[0]})

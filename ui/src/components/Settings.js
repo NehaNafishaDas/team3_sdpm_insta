@@ -41,7 +41,7 @@ class Settings extends Component {
     render() {
         const {status,activeSellImageModal}= this.state
 
-        const  isPrivate = status === "true" ?     <button class="submit" onClick = {this.setPrivate}>Make Private</button> :    <button class="submit" onClick = {this.setPrivate}>Make Public</button>
+        const  isPrivate = status === "true" ?     <button class="submit" onClick = {this.setPrivate}>Make Public</button> :    <button class="submit" onClick = {this.setPrivate}>Make Private</button>
         return (
             <div class="edit-profile-view active">
             <div class="cancel-icon-white close-view" onClick={this.handleModalClose}></div>
@@ -51,10 +51,10 @@ class Settings extends Component {
                <p style = {{color: 'grey',paddingTop:'20px',fontSize:'0.8em'}}>Only people you follow would be able to view your pictures when your account is on private mode.</p>
                <br/>
                <hr/>
-               <p class = "account-privacy"><h4>Image Selling</h4></p>
+               {/* <p class = "account-privacy"><h4>Image Selling</h4></p>
                <button class="submit" onClick = {this.sellImage}>Sell</button> <p style = {{marginTop:'-25px',paddingLeft:'85px'}}>Sell Image</p>
                <p style = {{color: 'grey',paddingTop:'20px',fontSize:'0.8em'}}>Select which of your images you would like to sell and put on the market </p>
-               
+                */}
             </form>
             {activeSellImageModal === "activeSellImageModal"?<Redirect to = {{pathname:"/sellimage"}}/>:null}
             </div>
