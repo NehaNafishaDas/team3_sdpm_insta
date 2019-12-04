@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import {Redirect} from 'react-router-dom'
 
 class Settings extends Component {
     constructor(props) {
         super(props);
-        this.state = {  };
+        this.state = { activeSellImageModal:false };
     }
 
     componentWillMount(){
@@ -32,8 +33,13 @@ class Settings extends Component {
         })
     }
 
+    sellImage = () =>{
+        this.setState({activeSellImageModal:"activeSellImageModal"})
+       // this.handleModalClose()
+    }
+
     render() {
-        const {status}= this.state
+        const {status,activeSellImageModal}= this.state
 
         const  isPrivate = status === "true" ?     <button class="submit" onClick = {this.setPrivate}>Make Private</button> :    <button class="submit" onClick = {this.setPrivate}>Make Public</button>
         return (
@@ -41,9 +47,16 @@ class Settings extends Component {
             <div class="cancel-icon-white close-view" onClick={this.handleModalClose}></div>
             <form class="edit-profile-form" >
                <p class = "account-privacy"><h4>Acount Privacy</h4></p>
-              {isPrivate} <p style = {{marginTop:'-25px',paddingLeft:'130px'}}>Private Account</p>
+               {isPrivate} <p style = {{marginTop:'-25px',paddingLeft:'130px'}}>Private Account</p>
                <p style = {{color: 'grey',paddingTop:'20px',fontSize:'0.8em'}}>Only people you follow would be able to view your pictures when your account is on private mode.</p>
+               <br/>
+               <hr/>
+               <p class = "account-privacy"><h4>Image Selling</h4></p>
+               <button class="submit" onClick = {this.sellImage}>Sell</button> <p style = {{marginTop:'-25px',paddingLeft:'85px'}}>Sell Image</p>
+               <p style = {{color: 'grey',paddingTop:'20px',fontSize:'0.8em'}}>Select which of your images you would like to sell and put on the market </p>
+               
             </form>
+            {activeSellImageModal === "activeSellImageModal"?<Redirect to = {{pathname:"/sellimage"}}/>:null}
             </div>
         );
     } 

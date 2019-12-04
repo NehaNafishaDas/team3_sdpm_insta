@@ -48,14 +48,14 @@ class UserFollowersList extends Component {
         const {liked,  activeCommentWithPictureModal} = this.state
 
         const Tags = this.props.follower.tags ? ( this.props.follower.tags.map(tag =>{    
-            console.log(tag)
+        
            return( 
                <p style ={ {paddingBottom:10,paddingLeft:5,paddingRight:5,display: 'inline'}}>#{tag}</p>
            )
            }) ): null
 
         const location =  this.props.follower.location ?  <p>{this.props.follower.location}</p>: null
-        console.log(this.props.follower.tags)
+       
         return (
             <li class="post">
             <div class="post-header clearfix">

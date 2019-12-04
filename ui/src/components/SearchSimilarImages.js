@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import {Redirect} from 'react-router-dom'
 
 class SearchSimilarImages extends Component {
     constructor(props) {
@@ -20,14 +21,16 @@ class SearchSimilarImages extends Component {
                 'Content-Type':'multipart/form-data'
             }
         }).then(res=>{
-            console.log(res)
+                this.setState({data:res.data,activeViewSimilarImages:"activeViewSimilarImages"})
         }).catch(error=>{
 
         })
-        this.props.handleModalClose()
+      //  this.props.handleModalClose()
     }
     render() {
-        console.log(this.state)
+        const {activeViewSimilarImages,data} = this.state
+       console.log(data)
+     const similarImages =  activeViewSimilarImages==="activeViewSimilarImages"?<Redirect to = {{pathname:"/similarimages", state:{data:data}}} /> : null
         return (
             <form class="" style = {{marginLeft:'400px',marginTop:'20px'}} onSubmit = {this.onSubmit}>
                 <p style = {{padding:"30px 40px 20px "}}><h4>Search Similar Images</h4></p>
@@ -35,7 +38,7 @@ class SearchSimilarImages extends Component {
             <input type="file" class="name text-field" name = "images" id="files" onChange = {this.onUpload}/>
         
             <input type="submit" name="submit" class="def-button submit" value="Submit"/>
-            
+            {similarImages}
            </form>
         );
     }

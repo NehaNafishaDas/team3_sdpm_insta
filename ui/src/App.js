@@ -8,6 +8,8 @@ import OtherUserProfiles from './components/OtherUserProfiles'
 import ViewAlbum from './components/ViewAlbum'
 import ViewPicturesInAlbum from './components/ViewPicturesInAlbum'
 import CommentInfo from './components/CommentInfo'
+import SimilarImages from './components/SimilarImages';
+import SellImage from './components/SellImage';
 
 function App() {
   return (
@@ -21,6 +23,9 @@ function App() {
        <Route path = "/album" component  = {ViewAlbum} />
        <Route path = "/picture" component  = {ViewPicturesInAlbum} />
        <Route path = "/commentinfo/:id/:username" component = {CommentInfo} />
+       <Route path = "/similarimages" component  = {SimilarImages} />
+       <Route path = "/sellimage" component  = {SellImage} />
+
        </BrowserRouter>
     </div>
   );

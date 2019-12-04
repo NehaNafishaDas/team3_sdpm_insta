@@ -36,17 +36,20 @@ class Post extends Component {
         data.append("description",this.state.description)
         data.append("location",this.state.location)
         data.append("tags",this.state.tags)
+        data.append("longitude",this.state.longitude)
+        data.append("latitude",this.state.latitude)
 
         axios.post(`http://localhost:8081/imagepost`,data,{headers: {
             'Content-Type': 'multipart/form-data'
           }}).then(res=>{    
             console.log(res)
-            this.props.getAccountPicture()
             this.props.getFollowersInfo()
+            this.props.getAccountPicture()
+            
         }).catch(error=>{
 
         })
-
+       
         this.setState({description:"",selectedFile:null})
         this.handleModalClose()
         
@@ -70,6 +73,7 @@ class Post extends Component {
 
     getLocation=()=>{
         navigator.geolocation.getCurrentPosition((position)=>{
+            this.setState({longitude:position.coords.longitude,latitude:position.coords.latitude})
             axios.get(`https://us1.locationiq.com/v1/reverse.php?key=3858248baae9c2&lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`,{
                 withCredentials: false}).then(res=>{
                 console.log(res.data.address)
@@ -80,7 +84,7 @@ class Post extends Component {
 
     render() {
         const {profilepicture,address}  = this.state
-        console.log(address)
+        console.log(this.state)
        
        console.log(this.state)
         const state = address ? <option name = "location" onChange = {this.onChange} value={address.state}>{address.state}</option>:null

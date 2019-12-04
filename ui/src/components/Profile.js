@@ -14,8 +14,10 @@ class Profile extends Component {
         this.state = { activeViewPost:false,activeHover:null, activeCommentWithPictureModal:false,Image:[] ,imagePost:null ,activeLike:null,selectedFile:null,activeSettingsModal:false};
         this.viewPost = React.createRef();
         this.editProfile = React.createRef();
+        this.imageMaps = React.createRef()
         this.onClickViewPost = this.onClickViewPost.bind(this)
         this.onEditProfile = this.onEditProfile.bind(this)
+       
     }
 
     componentWillMount(){
@@ -40,7 +42,7 @@ class Profile extends Component {
 
     userPostDetails = (id)=>{
 		axios.get(`http://localhost:8081/getpost?postid=${id}`).then(res=>{
-            console.log(res.data.tags)
+         
             this.setState({userData:res.data})
             this.setState({tags:res.data.tags})
 		}).catch(error=>{
@@ -61,9 +63,21 @@ class Profile extends Component {
         this.editProfile.current.classList.remove('active');
     }
 
+    handleImageMapModalClose = ()=>{
+        this.imageMaps.current.classList.remove('active');
+    }
+
     onEditProfile(){
         this.editProfile.current.classList.add('active');
      }
+
+    imageMap = ()=>{
+        this.imageMaps.current.classList.add('active');
+        axios.get(`http://localhost:8081/imagemap?username=${this.state.username}`).then(res=>{
+            console.log(res)
+            this.setState({maps:res.data.url})
+        })
+    }
 
     onMouseHoverView = (e)=>{
         e.target.classList.add('user-post-hover');
@@ -72,9 +86,13 @@ class Profile extends Component {
         e.target.classList.remove('user-post-hover');
     }
 
+    handleImageMap = ()=>{
+       
+    }
+
     checkLogin= ()=>{
         axios.get('http://localhost:8081/loginstatus').then(res=>{
-            console.log(res)
+           
             this.setState({username:res.data.username})
             if(res.data.status === "notloggedin"){
                 this.props.history.push("/login")
@@ -84,7 +102,7 @@ class Profile extends Component {
 
     getAccountPicture = ()=>{
         axios.get('http://localhost:8081/accountposts').then(res=>{
-            console.log(res)
+         
             const Images = Object.values(res.data.posts)
             this.setState({Image:Images});
             this.setState({userDetails:res.data})
@@ -132,7 +150,7 @@ class Profile extends Component {
 
        axios.put('http://localhost:8081/updateprofile',data,{headers:{'Content-Type' :' multipart/data'}}).then(res=>{
         this.getAccountPicture()
-            console.log(res)
+          
        }).catch(error=>{
 
        })
@@ -152,16 +170,14 @@ class Profile extends Component {
     }
 
     render() {
-        const {Image,userData,liked,userCommentData,tags,username,userDetails,activeCommentWithPictureModal,activeSettingsModal} = this.state
-       console.log(userData)
-
+        const {Image,userData,liked,userCommentData,tags,username,userDetails,activeCommentWithPictureModal,activeSettingsModal,maps} = this.state
 
         const ImageList = Image.length ? ( Image.map(image =>{    
             const id = image._id
             const likes = image.likes
             const comments = image.comments.length
             const images = image.imageId[0].toString()
-            console.log(image.location)
+           
             return( 
                       
                <ViewPicture images ={images} comment = {comments} likes = {likes} onClickViewPost = {this.onClickViewPost} keyy = {id}/>
@@ -180,12 +196,14 @@ class Profile extends Component {
             const CommentImage = userCommentData ? ( userCommentData.map(comment =>{    
                 if(comment.image)  
                 return( 
-                    <li  class="comment" style = {{maxWidth:300}}> <span class="username">{comment.username}  </span><img src ={comment.image} style = {{maxWidth:300}}alt = "...."/></li>
+                    <li  class="comment" onClick = {this.showCommentModal} style = {{maxWidth:300}}> <span class="username">{comment.username}  </span><img src ={comment.image} style = {{maxWidth:300}}alt = "...."/>
+                   
+                    </li>
                 )
                 }) ): null
 
             const Tags = tags ? ( tags.map(tag =>{    
-                 console.log(tag)
+                
                 return( 
                     <p style ={ {paddingBottom:10,paddingLeft:5,paddingRight:5,display: 'inline'}}>#{tag}</p>
                 )
@@ -206,6 +224,7 @@ class Profile extends Component {
         const avatarMedium = userDetails ? <div class="avatar-medium user-image"  style={{backgroundImage : "url('" + userDetails.profilepicture + "')",backgroundSize : "cover",backgroundPosition : 'center'}}>></div>: null
         const avatar = userDetails ?  <div class="avatar-display user-image" style={{backgroundImage : "url('" + userDetails.profilepicture + "')",backgroundSize : "cover",backgroundPosition : 'center'}}></div>:null
         const location =  userData?  <p style = {{fontSize: 13, paddingTop:4}}>{userData.location}</p>: null
+        const mapImage = maps ?<img src = {maps} style = {{maxWidth:800}} onClick = {this.onClickAlbumMenu} alt = "..." />:null
             return (
             <div class = "container">
             <NavBar  username = {this.state.username}  getAccountPicture = {this.getAccountPicture}/>
@@ -218,6 +237,7 @@ class Profile extends Component {
                          {/* <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button>  */}
                          <button class="def-button edit-profile" onClick={this.onEditProfile}>Edit Profile</button> 
                          <img src = {image} style = {{maxWidth:26, marginLeft:'10px',marginTop:'30px'}} onClick = {this.handleSettings} alt = "..." />
+                         <button class="def-button edit-profile" onClick = {this.imageMap} style = {{ marginLeft:'10px'}} >Image Map</button> 
                         <div class="analysis clearfix">
                             <p class="data posts"><span class="value">{Image.length}</span> posts</p>
                             {followedUsersCount}
@@ -279,14 +299,26 @@ class Profile extends Component {
 				<textarea class="text-field bio" name = "bio" onChange = {this.onChange} placeholder="Design, Code, Art"></textarea>
                 <label for="username"> Profile Photo</label>
                 <input type="file" class="name text-field" name = "profilepicture" id="files" onChange = {this.onUpload}/>
+                {/* <label for="username"> Email</label>
+                <input type="file" class="name text-field" name = "profilepicture" id="files" onChange = {this.onUpload}/>
+                <label for="username"> Password</label>
+                <input type="file" class="name text-field" name = "profilepicture" id="files" onChange = {this.onUpload}/> */}
                 
 				<input type="submit" name="submit" class="def-button submit" value="Submit"/>
 			</form>
 		</div>
+
+        <div class = 'edit-profile-view' ref = {this.imageMaps}>
+              <div class="cancel-icon-white close-view" onClick={this.handleImageMapModalClose}></div>
+                <div class = "edit-profile-form" style = {{height:'75',width:'65%'}}>
+                {mapImage}
+                </div>
+            </div>
        
 	</div>
     {activeCommentWithPictureModal==="activeCommentingWithPictureModal"?<CommentWithImage getComments = {this.getComments} id = {this.state.id} handleModalClose = {this.handleModalClose}/>:null}
     {activeSettingsModal === "activeSettingsModal"?<Settings handleModalClose = {this.handleModalClose}/>:null}
+   
         </div>
          
         );
