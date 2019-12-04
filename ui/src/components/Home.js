@@ -83,9 +83,9 @@ class Home extends Component {
     render() {
 
     const {followersData,username,activeSortModal} = this.state
-  
+    
     const followers = followersData ? ( followersData.map(follower =>{   
-        console.log() 
+       
         return( 
            <UserFollowersList username ={this.state.username} getFollowersInfo = {this.getFollowersInfo} isLiked = {this.isLiked}  follower = {follower} keyy = {follower._id}/>
         )

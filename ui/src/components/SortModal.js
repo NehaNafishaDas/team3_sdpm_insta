@@ -24,10 +24,10 @@ class SortModal extends Component {
            
             <select name = "sort" onChange = {this.onChange}  class="name text-field">
                 <option selected>how do you want to sort the images?</option>
-                <option option name = "sort" onChange = {this.onChange}>likes</option>
-                <option option name = "sort" onChange = {this.onChange}>sort</option>
-                <option option name = "sort" onChange = {this.onChange}> ascending</option>
-                <option option name = "sort" onChange = {this.onChange}>descending</option>
+                <option option name = "sort" onChange = {this.onChange}>likesascending</option>
+                <option option name = "sort" onChange = {this.onChange}>likesdescending</option>
+                <option option name = "sort" onChange = {this.onChange}> dateascending</option>
+                <option option name = "sort" onChange = {this.onChange}>datedescending</option>
               
             </select>
             <input type="submit" name="submit" class="def-button submit" value="Submit"/>
